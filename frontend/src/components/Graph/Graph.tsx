@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { problemsService } from '../../services/database';
 import { Problem } from '../../types';
 import { RefreshCw, ZoomIn, ZoomOut, Filter } from 'lucide-react';
@@ -30,42 +30,7 @@ const Graph: React.FC = () => {
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
   const [selectedTag, setSelectedTag] = useState('');
 
-  useEffect(() => {
-    loadProblems();
-  }, []);
-
-  useEffect(() => {
-    if (problems.length > 0) {
-      generateGraph();
-    }
-  }, [problems, selectedDifficulty, selectedTag]);
-
-  useEffect(() => {
-    if (nodes.length > 0) {
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const interval = setInterval(() => {
-          simulateForces();
-          drawGraph();
-        }, 50);
-        return () => clearInterval(interval);
-      }
-    }
-  }, [nodes, edges, scale]);
-
-  const loadProblems = async () => {
-    try {
-      const { data, error } = await problemsService.getAllProblems();
-      if (error) throw error;
-      if (data) setProblems(data);
-    } catch (error) {
-      console.error('Error loading problems:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateGraph = () => {
+  const generateGraph = useCallback(() => {
     let filteredProblems = problems;
 
     // Apply filters
@@ -110,41 +75,41 @@ const Graph: React.FC = () => {
 
     setNodes(newNodes);
     setEdges(newEdges);
-  };
+  }, [problems, selectedDifficulty, selectedTag, setNodes, setEdges]);
 
-  const simulateForces = () => {
+  const simulateForces = useCallback(() => {
     const alpha = 0.1;
     const repulsion = 100;
     const attraction = 0.01;
 
     setNodes(prevNodes => {
-      const newNodes = [...prevNodes];
+      const newNodesList = [...prevNodes]; // Renamed to avoid conflict with 'nodes' state
 
       // Reset forces
-      newNodes.forEach(node => {
+      newNodesList.forEach(node => {
         node.vx *= 0.9; // Damping
         node.vy *= 0.9;
       });
 
       // Repulsion between all nodes
-      for (let i = 0; i < newNodes.length; i++) {
-        for (let j = i + 1; j < newNodes.length; j++) {
-          const dx = newNodes[j].x - newNodes[i].x;
-          const dy = newNodes[j].y - newNodes[i].y;
+      for (let i = 0; i < newNodesList.length; i++) {
+        for (let j = i + 1; j < newNodesList.length; j++) {
+          const dx = newNodesList[j].x - newNodesList[i].x;
+          const dy = newNodesList[j].y - newNodesList[i].y;
           const distance = Math.sqrt(dx * dx + dy * dy) || 1;
           const force = repulsion / (distance * distance);
           
-          newNodes[i].vx -= (dx / distance) * force;
-          newNodes[i].vy -= (dy / distance) * force;
-          newNodes[j].vx += (dx / distance) * force;
-          newNodes[j].vy += (dy / distance) * force;
+          newNodesList[i].vx -= (dx / distance) * force;
+          newNodesList[i].vy -= (dy / distance) * force;
+          newNodesList[j].vx += (dx / distance) * force;
+          newNodesList[j].vy += (dy / distance) * force;
         }
       }
 
       // Attraction along edges
       edges.forEach(edge => {
-        const source = newNodes.find(n => n.id === edge.source);
-        const target = newNodes.find(n => n.id === edge.target);
+        const source = newNodesList.find(n => n.id === edge.source);
+        const target = newNodesList.find(n => n.id === edge.target);
         
         if (source && target) {
           const dx = target.x - source.x;
@@ -160,7 +125,7 @@ const Graph: React.FC = () => {
       });
 
       // Apply forces and keep nodes in bounds
-      newNodes.forEach(node => {
+      newNodesList.forEach(node => {
         node.x += node.vx * alpha;
         node.y += node.vy * alpha;
         
@@ -169,11 +134,11 @@ const Graph: React.FC = () => {
         node.y = Math.max(50, Math.min(550, node.y));
       });
 
-      return newNodes;
+      return newNodesList;
     });
-  };
+  }, [edges, setNodes]);
 
-  const drawGraph = () => {
+  const drawGraph = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -191,13 +156,13 @@ const Graph: React.FC = () => {
     ctx.strokeStyle = '#e5e7eb';
     ctx.lineWidth = 1;
     edges.forEach(edge => {
-      const source = nodes.find(n => n.id === edge.source);
-      const target = nodes.find(n => n.id === edge.target);
+      const sourceNode = nodes.find(n => n.id === edge.source); // Renamed to avoid conflict
+      const targetNode = nodes.find(n => n.id === edge.target); // Renamed to avoid conflict
       
-      if (source && target) {
+      if (sourceNode && targetNode) {
         ctx.beginPath();
-        ctx.moveTo(source.x, source.y);
-        ctx.lineTo(target.x, target.y);
+        ctx.moveTo(sourceNode.x, sourceNode.y);
+        ctx.lineTo(targetNode.x, targetNode.y);
         ctx.stroke();
       }
     });
@@ -239,16 +204,51 @@ const Graph: React.FC = () => {
     });
 
     ctx.restore();
+  }, [nodes, edges, scale, canvasRef]);
+
+  const loadProblems = async () => {
+    try {
+      const { data, error } = await problemsService.getAllProblems();
+      if (error) throw error;
+      if (data) setProblems(data);
+    } catch (error) {
+      console.error('Error loading problems:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleZoomIn = () => setScale(prev => Math.min(prev * 1.2, 3));
-  const handleZoomOut = () => setScale(prev => Math.max(prev / 1.2, 0.3));
-  const handleReset = () => {
+  useEffect(() => {
+    loadProblems();
+  }, []);
+
+  // Removed eslint-disable-next-line for generateGraph
+  useEffect(() => {
+    if (problems.length > 0) {
+      generateGraph();
+    }
+  }, [problems, selectedDifficulty, selectedTag, generateGraph]); // Added generateGraph
+
+  // Removed eslint-disable-next-line for simulateForces and drawGraph
+  useEffect(() => {
+    if (nodes.length > 0) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const interval = setInterval(() => {
+          simulateForces();
+          drawGraph();
+        }, 50);
+        return () => clearInterval(interval);
+      }
+    }
+  }, [nodes, edges, scale, simulateForces, drawGraph]); // Added simulateForces, drawGraph
+
+  const handleZoomIn = useCallback(() => setScale(prev => Math.min(prev * 1.2, 3)), [setScale]);
+  const handleZoomOut = useCallback(() => setScale(prev => Math.max(prev / 1.2, 0.3)), [setScale]);
+  const handleReset = useCallback(() => {
     setScale(1);
     generateGraph();
-  };
-
-  const allTags = Array.from(new Set(problems.flatMap(p => p.tags)));
+  }, [setScale, generateGraph]);
 
   if (loading) {
     return <div className="text-center py-8">Loading graph...</div>;

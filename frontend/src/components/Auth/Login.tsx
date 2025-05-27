@@ -1,31 +1,33 @@
 import React, { useState } from 'react';
 import { Lock, User } from 'lucide-react';
+import { authService } from '../../services/supabase'; // Import Supabase auth service
 
 interface LoginProps {
   onLogin: (success: boolean) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
+  const [email] = useState('phananha4@gmail.com'); // Using a fixed email for simplicity, removed unused setEmail
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // Simple password check - you can customize this
-  const ADMIN_PASSWORD = 'leetcode2024'; // Change this to your preferred password
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Simulate a brief loading time
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const { data, error: authError } = await authService.signIn(email, password);
 
-    if (password === ADMIN_PASSWORD) {
-      localStorage.setItem('leetcode-auth', 'true');
+    if (authError) {
+      setError(authError.message || 'Failed to sign in. Please check credentials.');
+      onLogin(false);
+    } else if (data.user) {
+      // Supabase client now handles session persistence.
       onLogin(true);
     } else {
-      setError('Incorrect password. Please try again.');
+      // This case should ideally be covered by authError, but as a fallback:
+      setError('Login failed. An unexpected error occurred.');
       onLogin(false);
     }
 
@@ -51,6 +53,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* You can add an input field for email if you prefer not to hardcode it */}
+            {/* Example:
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+              <div className="mt-1 relative">
+                <input id="email" name="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter your email" />
+              </div>
+            </div>
+            */}
             <div>
               <label
                 htmlFor="password"
@@ -93,11 +104,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="mt-6">
             <div className="text-center text-sm text-gray-500">
               This is a personal LeetCode management system.
-              <br />
-              Default password:{' '}
-              <code className="bg-gray-100 px-1 rounded">
-                leetcode2024
-              </code>
+              {/* Consider removing or updating the default password hint if it's managed in Supabase */}
             </div>
           </div>
         </div>

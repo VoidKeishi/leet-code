@@ -1,15 +1,18 @@
 // Types for the application
 export interface Problem {
-  id: string;
+  id: string; // Or number, depending on your DB schema
   number: number;
   title: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
-  link: string;
   tags: string[];
-  intuition: string;
-  implementations: Implementation[];
-  created_at: string;
-  updated_at: string;
+  intuition?: string;
+  implementation?: string; // If you store this separately
+  implementation_language?: string; // New field for implementation language
+  url?: string; // New field for LeetCode URL
+  time_complexity?: string; // New field for Time Complexity
+  space_complexity?: string; // New field for Space Complexity
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Implementation {
@@ -20,15 +23,15 @@ export interface Implementation {
 }
 
 export interface TodoItem {
-  id: string;
+  id: string; // Or number
   problem_number: number;
   problem_title: string;
-  deadline: string;
+  deadline: string; // ISO date string
   priority: 'Low' | 'Medium' | 'High';
-  completed: boolean;
   notes?: string;
-  created_at: string;
-  updated_at: string;
+  completed: boolean;
+  user_id?: string; // If you associate todos with users
+  created_at?: string;
 }
 
 export interface User {

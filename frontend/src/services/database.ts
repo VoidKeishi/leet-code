@@ -22,17 +22,17 @@ export const problemsService = {
     return await supabase
       .from('problems')
       .insert([problem])
-      .select()
+      .select('*')
       .single();
   },
 
-  async updateProblem(id: string, problem: Partial<Problem>) {
+  // Update an existing problem
+  async updateProblem(id: string, problem: Partial<Omit<Problem, 'id' | 'created_at' | 'updated_at'>>) {
     return await supabase
       .from('problems')
       .update(problem)
       .eq('id', id)
-      .select()
-      .single();
+      .select(); // Removed .single()
   },
 
   async deleteProblem(id: string) {

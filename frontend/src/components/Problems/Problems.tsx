@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { problemsService } from '../../services/database';
 import { Problem } from '../../types';
-import { Search, Filter, Plus, Edit, ExternalLink } from 'lucide-react';
+import { Search, Plus, Edit, ExternalLink } from 'lucide-react';
 
 const Problems: React.FC = () => {
   const [problems, setProblems] = useState<Problem[]>([]);
@@ -12,29 +12,7 @@ const Problems: React.FC = () => {
   const [difficultyFilter, setDifficultyFilter] = useState('All');
   const [tagFilter, setTagFilter] = useState('');
 
-  useEffect(() => {
-    loadProblems();
-  }, []);
-
-  useEffect(() => {
-    filterProblems();
-  }, [problems, searchQuery, difficultyFilter, tagFilter]);
-
-  const loadProblems = async () => {
-    try {
-      const { data, error } = await problemsService.getAllProblems();
-      if (error) throw error;
-      if (data) {
-        setProblems(data);
-      }
-    } catch (error) {
-      console.error('Error loading problems:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterProblems = () => {
+  const filterProblems = useCallback(() => {
     let filtered = problems;
 
     // Search filter
@@ -59,9 +37,31 @@ const Problems: React.FC = () => {
     }
 
     setFilteredProblems(filtered);
-  };
+  }, [problems, searchQuery, difficultyFilter, tagFilter, setFilteredProblems]);
 
-  const allTags = Array.from(new Set(problems.flatMap(p => p.tags)));
+  useEffect(() => {
+    loadProblems();
+  }, []);
+
+  // Disable missing dependency on filterProblems
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    filterProblems();
+  }, [problems, searchQuery, difficultyFilter, tagFilter, filterProblems]);
+
+  const loadProblems = async () => {
+    try {
+      const { data, error } = await problemsService.getAllProblems();
+      if (error) throw error;
+      if (data) {
+        setProblems(data);
+      }
+    } catch (error) {
+      console.error('Error loading problems:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return <div className="text-center py-8">Loading problems...</div>;
@@ -122,55 +122,59 @@ const Problems: React.FC = () => {
         </div>
         <div className="divide-y divide-gray-200">
           {filteredProblems.map((problem) => (
-            <div key={problem.id} className="px-6 py-4 hover:bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium text-gray-500">
-                      #{problem.number}
-                    </span>
-                    <Link
-                      to={`/problems/${problem.id}`}
-                      className="text-lg font-medium text-gray-900 hover:text-indigo-600"
-                    >
-                      {problem.title}
-                    </Link>
-                    <span className={`px-2 py-1 text-xs rounded ${
-                      problem.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
-                      problem.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {problem.difficulty}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center space-x-2">
-                    {problem.tags.map((tag) => (
-                      <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                        {tag}
+            <Link key={problem.id} to={`/problems/${problem.id}`} className="block hover:bg-gray-50 dark:hover:bg-gray-700">
+              <div className="px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        #{problem.number}
                       </span>
-                    ))}
+                      {/* Link around title is no longer primary, whole bar is link */}
+                      <span className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                        {problem.title}
+                      </span>
+                      <span className={`px-2 py-1 text-xs rounded ${ // Added dark mode styles for difficulty badges
+                        problem.difficulty === 'Easy' ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-200' :
+                        problem.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200' :
+                        'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-200'
+                      }`}>
+                        {problem.difficulty}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center space-x-2">
+                      {problem.tags.map((tag) => (
+                        <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded dark:bg-gray-600 dark:text-gray-200">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <a
-                    href={problem.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 text-gray-400 hover:text-gray-600"
-                    title="Open LeetCode"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                  <Link
-                    to={`/problems/${problem.id}/edit`}
-                    className="p-2 text-gray-400 hover:text-gray-600"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Link>
+                  <div className="flex items-center space-x-2">
+                    {problem.url && (
+                    <a
+                      href={problem.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      title="Open LeetCode"
+                      onClick={(e) => e.stopPropagation()} // Prevent navigation when clicking external link
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    )}
+                    <Link
+                      to={`/problems/${problem.id}/edit`}
+                      className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      title="Edit"
+                      onClick={(e) => e.stopPropagation()} // Prevent navigation when clicking edit button
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
           {filteredProblems.length === 0 && (
             <div className="px-6 py-8 text-center text-gray-500">
