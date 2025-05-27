@@ -1,0 +1,3 @@
+- Have very simple backend to store and retrieve information, deploy on https://render.com/ free tier and https://supabase.com/ database
+- Frontend on firebase, using reactjs
+- Have markdown and code syntax highlight viewer 

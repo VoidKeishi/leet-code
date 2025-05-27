@@ -1,0 +1,151 @@
+Top 150 leetcode problems
+- [x] 1.  **Contains Duplicate** - LeetCode 217
+- [ ] 2.  **Valid Anagram** - LeetCode 242
+- [ ] 3.  **Two Sum** - LeetCode 1
+- [ ] 4.  **Group Anagrams** - LeetCode 49
+- [ ] 5.  **Top K Frequent Elements** - LeetCode 347
+- [ ] 6.  **Product of Array Except Self** - LeetCode 238
+- [ ] 7.  **Valid Sudoku** - LeetCode 36
+- [ ] 8.  **Encode and Decode Strings** - LeetCode 271 (Premium)
+- [ ] 9.  **Longest Consecutive Sequence** - LeetCode 128
+- [ ] 10. **Valid Palindrome** - LeetCode 125
+- [ ] 11. **Two Sum II - Input Array Is Sorted** - LeetCode 167
+- [ ] 12. **3Sum** - LeetCode 15
+- [ ] 13. **Container With Most Water** - LeetCode 11
+- [ ] 14. **Trapping Rain Water** - LeetCode 42
+- [ ] 15. **Best Time to Buy and Sell Stock** - LeetCode 121
+- [ ] 16. **Longest Substring Without Repeating Characters** - LeetCode 3
+- [ ] 17. **Longest Repeating Character Replacement** - LeetCode 424
+- [ ] 18. **Permutation in String** - LeetCode 567
+- [ ] 19. **Minimum Window Substring** - LeetCode 76
+- [ ] 20. **Sliding Window Maximum** - LeetCode 239
+- [ ] 21. **Valid Parentheses** - LeetCode 20
+- [ ] 22. **Min Stack** - LeetCode 155
+- [ ] 23. **Evaluate Reverse Polish Notation** - LeetCode 150
+- [ ] 24. **Generate Parentheses** - LeetCode 22
+- [ ] 25. **Daily Temperatures** - LeetCode 739
+- [ ] 26. **Car Fleet** - LeetCode 853
+- [ ] 27. **Largest Rectangle in Histogram** - LeetCode 84
+- [ ] 28. **Binary Search** - LeetCode 704
+- [ ] 29. **Search a 2D Matrix** - LeetCode 74
+- [ ] 30. **Koko Eating Bananas** - LeetCode 875
+- [ ] 31. **Find Minimum in Rotated Sorted Array** - LeetCode 153
+- [ ] 32. **Search in Rotated Sorted Array** - LeetCode 33
+- [ ] 33. **Time Based Key-Value Store** - LeetCode 981
+- [ ] 34. **Median of Two Sorted Arrays** - LeetCode 4
+- [ ] 35. **Reverse Linked List** - LeetCode 206
+- [ ] 36. **Merge Two Sorted Lists** - LeetCode 21
+- [ ] 37. **Reorder List** - LeetCode 143
+- [ ] 38. **Remove Nth Node From End of List** - LeetCode 19
+- [ ] 39. **Copy List with Random Pointer** - LeetCode 138
+- [ ] 40. **Add Two Numbers** - LeetCode 2
+- [ ] 41. **Linked List Cycle** - LeetCode 141
+- [ ] 42. **Find The Duplicate Number** - LeetCode 287
+- [ ] 43. **LRU Cache** - LeetCode 146
+- [ ] 44. **Merge K Sorted Lists** - LeetCode 23
+- [ ] 45. **Reverse Nodes In K Group** - LeetCode 25
+- [ ] 46. **Invert Binary Tree** - LeetCode 226
+- [ ] 47. **Maximum Depth of Binary Tree** - LeetCode 104
+- [ ] 48. **Diameter of Binary Tree** - LeetCode 543
+- [ ] 49. **Balanced Binary Tree** - LeetCode 110
+- [ ] 50. **Same Tree** - LeetCode 100
+- [ ] 51. **Subtree of Another Tree** - LeetCode 572
+- [ ] 52. **Lowest Common Ancestor of a Binary Search Tree** - LeetCode 235
+- [ ] 53. **Binary Tree Level Order Traversal** - LeetCode 102
+- [ ] 54. **Binary Tree Right Side View** - LeetCode 199
+- [ ] 55. **Count Good Nodes In Binary Tree** - LeetCode 1448
+- [ ] 56. **Validate Binary Search Tree** - LeetCode 98
+- [ ] 57. **Kth Smallest Element In a BST** - LeetCode 230
+- [ ] 58. **Construct Binary Tree from Preorder and Inorder Traversal** - LeetCode 105
+- [ ] 59. **Binary Tree Maximum Path Sum** - LeetCode 124
+- [ ] 60. **Serialize And Deserialize Binary Tree** - LeetCode 297
+- [ ] 61. **Implement Trie (Prefix Tree)** - LeetCode 208
+- [ ] 62. **Design Add And Search Words Data Structure** - LeetCode 211
+- [ ] 63. **Word Search II** - LeetCode 212
+- [ ] 64. **Kth Largest Element In a Stream** - LeetCode 703
+- [ ] 65. **Last Stone Weight** - LeetCode 1046
+- [ ] 66. **K Closest Points to Origin** - LeetCode 973
+- [ ] 67. **Kth Largest Element In Array** - LeetCode 215
+- [ ] 68. **Task Scheduler** - LeetCode 621
+- [ ] 69. **Design Twitter** - LeetCode 355
+- [ ] 70. **Find Median From Data Stream** - LeetCode 295
+- [ ] 71. **Subsets** - LeetCode 78
+- [ ] 72. **Combination Sum** - LeetCode 39
+- [ ] 73. **Permutations** - LeetCode 46
+- [ ] 74. **Subsets II** - LeetCode 90
+- [ ] 75. **Combination Sum II** - LeetCode 40
+- [ ] 76. **Word Search** - LeetCode 79
+- [ ] 77. **Palindrome Partitioning** - LeetCode 131
+- [ ] 78. **Letter Combinations of a Phone Number** - LeetCode 17
+- [ ] 79. **N Queens** - LeetCode 51
+- [ ] 80. **Number of Islands** - LeetCode 200
+- [ ] 81. **Clone Graph** - LeetCode 133
+- [ ] 82. **Max Area of Island** - LeetCode 695
+- [ ] 83. **Pacific Atlantic Water Flow** - LeetCode 417
+- [ ] 84. **Surrounded Regions** - LeetCode 130
+- [ ] 85. **Rotting Oranges** - LeetCode 994
+- [ ] 86. **Walls And Gates** - LeetCode 286 (Premium)
+- [ ] 87. **Course Schedule** - LeetCode 207
+- [ ] 88. **Course Schedule II** - LeetCode 210
+- [ ] 89. **Redundant Connection** - LeetCode 684
+- [ ] 90. **Number of Connected Components in an Undirected Graph** - LeetCode 323 (Premium)
+- [ ] 91. **Graph Valid Tree** - LeetCode 261 (Premium)
+- [ ] 92. **Word Ladder** - LeetCode 127
+- [ ] 93. **Reconstruct Itinerary** - LeetCode 332
+- [ ] 94. **Min Cost to Connect All Points** - LeetCode 1584
+- [ ] 95. **Network Delay Time** - LeetCode 743
+- [ ] 96. **Swim in Rising Water** - LeetCode 778
+- [ ] 97. **Alien Dictionary** - LeetCode 269 (Premium)
+- [ ] 98. **Cheapest Flights Within K Stops** - LeetCode 787
+- [ ] 99. **Climbing Stairs** - LeetCode 70
+- [ ] 100. **Min Cost Climbing Stairs** - LeetCode 746
+- [ ] 101. **House Robber** - LeetCode 198
+- [ ] 102. **House Robber II** - LeetCode 213
+- [ ] 103. **Longest Palindromic Substring** - LeetCode 5
+- [ ] 104. **Palindromic Substrings** - LeetCode 647
+- [ ] 105. **Decode Ways** - LeetCode 91
+- [ ] 106. **Coin Change** - LeetCode 322
+- [ ] 107. **Maximum Product Subarray** - LeetCode 152
+- [ ] 108. **Word Break** - LeetCode 139
+- [ ] 109. **Longest Increasing Subsequence** - LeetCode 300
+- [ ] 110. **Partition Equal Subset Sum** - LeetCode 416
+- [ ] 111. **Unique Paths** - LeetCode 62
+- [ ] 112. **Longest Common Subsequence** - LeetCode 1143
+- [ ] 113. **Best Time to Buy and Sell Stock with Cooldown** - LeetCode 309
+- [ ] 114. **Coin Change II** - LeetCode 518
+- [ ] 115. **Target Sum** - LeetCode 494
+- [ ] 116. **Interleaving String** - LeetCode 97
+- [ ] 117. **Longest Increasing Path In a Matrix** - LeetCode 329
+- [ ] 118. **Distinct Subsequences** - LeetCode 115
+- [ ] 119. **Edit Distance** - LeetCode 72
+- [ ] 120. **Burst Balloons** - LeetCode 312
+- [ ] 121. **Regular Expression Matching** - LeetCode 10
+- [ ] 122. **Maximum Subarray** - LeetCode 53
+- [ ] 123. **Jump Game** - LeetCode 55
+- [ ] 124. **Jump Game II** - LeetCode 45
+- [ ] 125. **Gas Station** - LeetCode 134
+- [ ] 126. **Hand of Straights** - LeetCode 846
+- [ ] 127. **Merge Triplets to Form Target Triplet** - LeetCode 1899
+- [ ] 128. **Partition Labels** - LeetCode 763
+- [ ] 129. **Valid Parenthesis String** - LeetCode 678
+- [ ] 130. **Insert Interval** - LeetCode 57
+- [ ] 131. **Merge Intervals** - LeetCode 56
+- [ ] 132. **Non Overlapping Intervals** - LeetCode 435
+- [ ] 133. **Meeting Rooms** - LeetCode 252 (Premium)
+- [ ] 134. **Meeting Rooms II** - LeetCode 253 (Premium)
+- [ ] 135. **Minimum Interval to Include Each Query** - LeetCode 1851
+- [ ] 136. **Rotate Image** - LeetCode 48
+- [ ] 137. **Spiral Matrix** - LeetCode 54
+- [ ] 138. **Set Matrix Zeroes** - LeetCode 73
+- [ ] 139. **Happy Number** - LeetCode 202
+- [ ] 140. **Plus One** - LeetCode 66
+- [ ] 141. **Pow(x, n)** - LeetCode 50
+- [ ] 142. **Multiply Strings** - LeetCode 43
+- [ ] 143. **Detect Squares** - LeetCode 2013
+- [ ] 144. **Single Number** - LeetCode 136
+- [ ] 145. **Number of 1 Bits** - LeetCode 191
+- [ ] 146. **Counting Bits** - LeetCode 338
+- [ ] 147. **Reverse Bits** - LeetCode 190
+- [ ] 148. **Missing Number** - LeetCode 268
+- [ ] 149. **Sum of Two Integers** - LeetCode 371
+- [ ] 150. **Reverse Integer** - LeetCode 7
