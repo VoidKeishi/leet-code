@@ -5,10 +5,14 @@ import { Problem } from '../../types';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ArrowLeftIcon, PencilIcon } from '@heroicons/react/24/solid';
-import { colors, getDifficultyColor } from '../../theme/colors';
+import { colors, getDifficultyColor, materialColors, components } from '../../theme/colors';
 import { useTheme } from '../../context/ThemeContext';
 
-const ProblemView: React.FC = () => {
+interface ProblemViewProps {
+  isGuest?: boolean;
+}
+
+const ProblemView: React.FC<ProblemViewProps> = ({ isGuest = false }) => {
   const { id } = useParams<{ id: string }>();
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,13 +78,16 @@ const ProblemView: React.FC = () => {
           <ArrowLeftIcon className="h-5 w-5 mr-2" />
           Back to Problems
         </Link>
-        <Link
-          to={`/problems/${problem.id}/edit`}
-          className={`py-2 px-4 ${colors.button.secondary} ${colors.button.secondaryHover} font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 ${colors.primary.ring} focus:ring-opacity-75 transition-colors`}
-        >
-          <PencilIcon className="h-5 w-5 mr-2 inline" />
-          Edit Problem
-        </Link>
+        {/* Hide edit button for guest users */}
+        {!isGuest && (
+          <Link
+            to={`/problems/${problem.id}/edit`}
+            className={`inline-flex items-center px-4 py-2 font-semibold rounded-lg shadow-md transition-colors ${components.button.filledTonal.bg} ${components.button.filledTonal.text} ${components.button.filledTonal.hover} ${components.button.filledTonal.focus}`}
+          >
+            <PencilIcon className="h-5 w-5 mr-2" />
+            Edit Problem
+          </Link>
+        )}
       </div>
 
       <div className={`${colors.background.card} shadow-lg rounded-lg overflow-hidden border ${colors.border.primary}`}>
@@ -89,7 +96,11 @@ const ProblemView: React.FC = () => {
             <h1 className={`text-3xl font-bold ${colors.text.headings} mb-2 md:mb-0`}>
               {problem.number}. {problem.title}
             </h1>
-            <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getDifficultyColor(problem.difficulty)}`}>
+            <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
+              problem.difficulty === 'Easy' ? `${colors.difficulty.easy.bg} ${colors.difficulty.easy.text}` :
+              problem.difficulty === 'Medium' ? `${colors.difficulty.medium.bg} ${colors.difficulty.medium.text}` :
+              `${colors.difficulty.hard.bg} ${colors.difficulty.hard.text}`
+            }`}>
               {problem.difficulty}
             </span>
           </div>

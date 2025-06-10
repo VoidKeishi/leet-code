@@ -5,7 +5,11 @@ import { useTheme } from '../../context/ThemeContext';
 import { todosService } from '../../services/database';
 import { TodoItem } from '../../types';
 
-const Planning: React.FC = () => {
+interface PlanningProps {
+  isGuest?: boolean;
+}
+
+const Planning: React.FC<PlanningProps> = ({ isGuest = false }) => {
   const { theme } = useTheme();
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -231,40 +235,49 @@ const Planning: React.FC = () => {
 
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <h1 className={`text-3xl font-bold ${colors.text.primary} mb-4 md:mb-0`}>
-          Planning & Todo List
-        </h1>
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm ${colors.text.inverse} ${colors.button.primary}`}
-          >
-            <PlusCircle className="mr-2 h-5 w-5" />
-            Add Todo
-          </button>
-          <button
-            onClick={() => setShowTemplate(true)}
-            className={`inline-flex items-center px-4 py-2 border ${colors.border.primary} rounded-md shadow-sm text-sm font-medium ${colors.text.secondary} ${colors.background.card} ${colors.background.hover}`}
-          >
-            <FileText className="mr-2 h-5 w-5" />
-            JSON Template
-          </button>
-          <button
-            onClick={importFromJSON}
-            className={`inline-flex items-center px-4 py-2 border ${colors.border.primary} rounded-md shadow-sm text-sm font-medium ${colors.text.secondary} ${colors.background.card} ${colors.background.hover}`}
-          >
-            <Upload className="mr-2 h-5 w-5" />
-            Import JSON
-          </button>
-          <button
-            onClick={exportToJSON}
-            disabled={todos.length === 0}
-            className={`inline-flex items-center px-4 py-2 border ${colors.border.primary} rounded-md shadow-sm text-sm font-medium ${colors.text.secondary} ${colors.background.card} ${colors.background.hover} ${todos.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <Download className="mr-2 h-5 w-5" />
-            Export JSON
-          </button>
+        <div>
+          <h1 className={`text-3xl font-bold ${colors.text.primary} mb-4 md:mb-0`}>
+            Planning & Todo List
+          </h1>
+          {isGuest && (
+            <p className={`text-sm ${colors.text.secondary}`}>
+              Viewing in guest mode. Login to add, edit, or delete todos.
+            </p>
+          )}
         </div>
+        {!isGuest && (
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm ${colors.text.inverse} ${colors.button.primary}`}
+            >
+              <PlusCircle className="mr-2 h-5 w-5" />
+              Add Todo
+            </button>
+            <button
+              onClick={() => setShowTemplate(true)}
+              className={`inline-flex items-center px-4 py-2 border ${colors.border.primary} rounded-md shadow-sm text-sm font-medium ${colors.text.secondary} ${colors.background.card} ${colors.background.hover}`}
+            >
+              <FileText className="mr-2 h-5 w-5" />
+              JSON Template
+            </button>
+            <button
+              onClick={importFromJSON}
+              className={`inline-flex items-center px-4 py-2 border ${colors.border.primary} rounded-md shadow-sm text-sm font-medium ${colors.text.secondary} ${colors.background.card} ${colors.background.hover}`}
+            >
+              <Upload className="mr-2 h-5 w-5" />
+              Import JSON
+            </button>
+            <button
+              onClick={exportToJSON}
+              disabled={todos.length === 0}
+              className={`inline-flex items-center px-4 py-2 border ${colors.border.primary} rounded-md shadow-sm text-sm font-medium ${colors.text.secondary} ${colors.background.card} ${colors.background.hover} ${todos.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <Download className="mr-2 h-5 w-5" />
+              Export JSON
+            </button>
+          </div>
+        )}
       </div>
 
       {/* JSON Template Modal */}
@@ -415,15 +428,18 @@ const Planning: React.FC = () => {
                 <TodoCard
                   key={todo.id}
                   todo={todo}
-                  onToggleComplete={toggleComplete}
-                  onDelete={deleteTodo}
+                  onToggleComplete={isGuest ? () => {} : toggleComplete}
+                  onDelete={isGuest ? () => {} : deleteTodo}
                   getDifficultyColor={getDifficultyColor}
+                  isGuest={isGuest}
                 />
               ))}
             </div>
           ) : (
             <div className={`p-8 text-center ${colors.background.card} border ${colors.border.primary} rounded-lg`}>
-              <p className={`${colors.text.secondary}`}>No pending todos. Add one to get started!</p>
+              <p className={`${colors.text.secondary}`}>
+                {isGuest ? 'No pending todos to display.' : 'No pending todos. Add one to get started!'}
+              </p>
             </div>
           )}
         </div>
@@ -439,9 +455,10 @@ const Planning: React.FC = () => {
                 <TodoCard
                   key={todo.id}
                   todo={todo}
-                  onToggleComplete={toggleComplete}
-                  onDelete={deleteTodo}
+                  onToggleComplete={isGuest ? () => {} : toggleComplete}
+                  onDelete={isGuest ? () => {} : deleteTodo}
                   getDifficultyColor={getDifficultyColor}
+                  isGuest={isGuest}
                 />
               ))}
             </div>
@@ -457,19 +474,22 @@ interface TodoCardProps {
   onToggleComplete: (id: string) => void;
   onDelete: (id: string) => void;
   getDifficultyColor: (difficulty: string) => string;
+  isGuest?: boolean;
 }
 
-const TodoCard: React.FC<TodoCardProps> = ({ todo, onToggleComplete, onDelete, getDifficultyColor }) => {
+const TodoCard: React.FC<TodoCardProps> = ({ todo, onToggleComplete, onDelete, getDifficultyColor, isGuest = false }) => {
   return (
     <div className={`p-4 rounded-lg ${colors.background.card} border ${colors.border.primary} ${todo.completed ? 'opacity-75' : ''}`}>
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-3 flex-1">
-          <button
-            onClick={() => onToggleComplete(todo.id)}
-            className={`mt-1 ${todo.completed ? colors.action.complete : colors.text.muted} hover:${colors.action.complete}`}
-          >
-            {todo.completed ? <CheckCircle className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
-          </button>
+          {!isGuest && (
+            <button
+              onClick={() => onToggleComplete(todo.id)}
+              className={`mt-1 ${todo.completed ? colors.action.complete : colors.text.muted} hover:${colors.action.complete}`}
+            >
+              {todo.completed ? <CheckCircle className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
+            </button>
+          )}
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
               <h3 className={`font-medium ${colors.text.primary} ${todo.completed ? 'line-through' : ''}`}>
@@ -500,13 +520,15 @@ const TodoCard: React.FC<TodoCardProps> = ({ todo, onToggleComplete, onDelete, g
             )}
           </div>
         </div>
-        <button
-          onClick={() => onDelete(todo.id)}
-          className={`ml-3 ${colors.action.delete} p-1 rounded hover:bg-red-100 dark:hover:bg-red-900`}
-          title="Delete todo"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        {!isGuest && (
+          <button
+            onClick={() => onDelete(todo.id)}
+            className={`ml-3 ${colors.action.delete} p-1 rounded hover:bg-red-100 dark:hover:bg-red-900`}
+            title="Delete todo"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </div>
   );

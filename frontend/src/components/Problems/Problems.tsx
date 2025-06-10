@@ -3,9 +3,13 @@ import { Link } from 'react-router-dom';
 import { problemsService } from '../../services/database';
 import { Problem } from '../../types';
 import { Search, PlusCircle, Edit, ExternalLink } from 'lucide-react';
-import { colors, getDifficultyColor } from '../../theme/colors'; // Import centralized colors
+import { colors, getDifficultyColor } from '../../theme/colors';
 
-const Problems: React.FC = () => {
+interface ProblemsProps {
+  isGuest?: boolean;
+}
+
+const Problems: React.FC<ProblemsProps> = ({ isGuest = false }) => {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [filteredProblems, setFilteredProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,16 +75,24 @@ const Problems: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-        <h1 className={`text-3xl font-bold ${colors.text.primary} mb-4 md:mb-0`}>Problems</h1>
-        <div className="flex space-x-3">
-          <Link 
-            to="/problems/new"
-            className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm ${colors.text.inverse} ${colors.button.primary}`}
-          >
-            Add New Problem
-          </Link>
-          {/* Add other actions here if needed, e.g., Import Problems */}
+        <div>
+          <h1 className={`text-3xl font-bold ${colors.text.primary} mb-4 md:mb-0`}>Problems</h1>
+          {isGuest && (
+            <p className={`text-sm ${colors.text.secondary}`}>
+              Viewing in guest mode. Login to add or edit problems.
+            </p>
+          )}
         </div>
+        {!isGuest && (
+          <div className="flex space-x-3">
+            <Link 
+              to="/problems/new"
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm ${colors.text.inverse} ${colors.button.primary}`}
+            >
+              Add New Problem
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Search and Filter Bar */}
@@ -164,7 +176,11 @@ const Problems: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getDifficultyColor(problem.difficulty)}`}>
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      problem.difficulty === 'Easy' ? `${colors.difficulty.easy.bg} ${colors.difficulty.easy.text}` :
+                      problem.difficulty === 'Medium' ? `${colors.difficulty.medium.bg} ${colors.difficulty.medium.text}` :
+                      `${colors.difficulty.hard.bg} ${colors.difficulty.hard.text}`
+                    }`}>
                       {problem.difficulty}
                     </span>
                   </td>
@@ -191,13 +207,15 @@ const Problems: React.FC = () => {
                       >
                         View
                       </Link>
-                      <Link 
-                        to={`/problems/${problem.id}/edit`}
-                        className={`${colors.text.link} ${colors.text.linkHover} transition-colors`}
-                        title="Edit Problem"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Link>
+                      {!isGuest && (
+                        <Link 
+                          to={`/problems/${problem.id}/edit`}
+                          className={`${colors.text.link} ${colors.text.linkHover} transition-colors`}
+                          title="Edit Problem"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Link>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -1,117 +1,155 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, BookOpen, Calendar, Network, LogOut, Sun, Moon } from 'lucide-react';
+import { HomeIcon, BookOpenIcon, CalendarIcon, ChartBarIcon, ArrowRightOnRectangleIcon, UserIcon } from '@heroicons/react/24/outline';
 import { colors } from '../../theme/colors';
 import { useTheme } from '../../context/ThemeContext';
 
 interface NavbarProps {
+  isAuthenticated: boolean;
+  onLogin: () => void;
   onLogout: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onLogout }) => {
+const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, onLogin, onLogout }) => {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
 
-  const navItems = [
-    { path: '/', label: 'Dashboard', icon: Home },
-    { path: '/problems', label: 'Problems', icon: BookOpen },
-    { path: '/planning', label: 'Planning', icon: Calendar },
-    { path: '/graph', label: 'Graph', icon: Network },
+  const navigation = [
+    { name: 'Dashboard', href: '/', icon: HomeIcon },
+    { name: 'Problems', href: '/problems', icon: BookOpenIcon },
+    { name: 'Planning', href: '/planning', icon: CalendarIcon },
+    { name: 'Graph', href: '/graph', icon: ChartBarIcon },
   ];
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  const isActivePath = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
   };
 
   return (
-    <nav className={`${colors.background.secondary} shadow-sm`}>
+    <nav className={`${colors.background.card} shadow-lg border-b ${colors.border.primary}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className={`flex-shrink-0 ${colors.text.primary} font-bold text-xl`}>
-              LeetCode Manager
-            </Link>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`${isActive(item.path)
-                          ? `${colors.primary.border} ${colors.text.primary}`
-                          : `border-transparent ${colors.text.secondary} ${colors.text.linkHover} hover:border-gray-300 dark:hover:border-gray-500`
-                        } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors`}
-                    >
-                      <Icon className="w-4 h-4 mr-2" />
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </div>
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            <div className="flex-shrink-0 flex items-center">
+              <Link to="/" className="flex items-center">
+                <div className={`w-8 h-8 ${colors.primary.bg} rounded-lg flex items-center justify-center mr-3`}>
+                  <span className={`text-sm font-bold ${colors.text.inverse}`}>{"</>"}</span>
+                </div>
+                <span className={`text-xl font-bold ${colors.text.primary}`}>
+                  Keishi's LeetCode Tracker
+                </span>
+                {!isAuthenticated && (
+                  <span className={`ml-2 px-2 py-1 text-xs rounded-md ${colors.difficulty.medium.bg} ${colors.difficulty.medium.text}`}>
+                    Guest Mode
+                  </span>
+                )}
+              </Link>
+            </div>
+            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                const isActive = isActivePath(item.href);
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
+                      isActive
+                        ? `${colors.primary.border} ${colors.primary.text}`
+                        : `border-transparent ${colors.text.secondary} ${colors.text.linkHover}`
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 mr-2" />
+                    {item.name}
+                  </Link>
+                );
+              })}
             </div>
           </div>
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
+            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className={`${colors.button.ghost} p-2 rounded-md transition-colors`}
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              className={`p-2 rounded-md transition-colors ${colors.background.hover} ${colors.text.secondary}`}
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
             >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {theme === 'light' ? '🌙' : '☀️'}
             </button>
-            <button
-              onClick={onLogout}
-              className={`${colors.text.secondary} ${colors.text.linkHover} p-2 rounded-md transition-colors`}
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+
+            {/* Auth button */}
+            {isAuthenticated ? (
+              <button
+                onClick={onLogout}
+                className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm transition-colors ${colors.button.secondary}`}
+              >
+                <ArrowRightOnRectangleIcon className="h-4 w-4 mr-2" />
+                Logout
+              </button>
+            ) : (
+              <button
+                onClick={onLogin}
+                className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm transition-colors ${colors.button.primary}`}
+              >
+                <UserIcon className="h-4 w-4 mr-2" />
+                Login
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Mobile menu */}
-      <div className="md:hidden">
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          {navItems.map((item) => {
+      <div className="sm:hidden">
+        <div className={`pt-2 pb-3 space-y-1 border-t ${colors.border.primary}`}>
+          {navigation.map((item) => {
             const Icon = item.icon;
+            const isActive = isActivePath(item.href);
             return (
               <Link
-                key={item.path}
-                to={item.path}
-                className={`${isActive(item.path)
-                    ? `${colors.primary.bg} ${colors.primary.border} ${colors.primary.text}`
-                    : `border-transparent ${colors.text.secondary} ${colors.background.hover} hover:border-gray-300 dark:hover:border-gray-500`
-                  } block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors`}
+                key={item.name}
+                to={item.href}
+                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors ${
+                  isActive
+                    ? `${colors.primary.border} ${colors.primary.bg} ${colors.primary.text}`
+                    : `border-transparent ${colors.text.secondary} ${colors.background.hover}`
+                }`}
               >
                 <div className="flex items-center">
-                  <Icon className="w-4 h-4 mr-3" />
-                  {item.label}
+                  <Icon className="h-5 w-5 mr-3" />
+                  {item.name}
                 </div>
               </Link>
             );
           })}
-        </div>
-        <div className={`pt-4 pb-3 border-t ${colors.border.primary}`}>
-          <div className="flex items-center px-5">
-            <button
-              onClick={toggleTheme}
-              className={`${colors.button.ghost} p-2 rounded-md transition-colors w-full flex items-center justify-start`}
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {theme === 'dark' ? <Sun className="h-5 w-5 mr-2" /> : <Moon className="h-5 w-5 mr-2" />}
-              <span className={colors.text.secondary}>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-            </button>
-          </div>
-          <div className="mt-3 px-2 space-y-1">
-            <button
-              onClick={onLogout}
-              className={`block w-full text-left rounded-md px-3 py-2 text-base font-medium ${colors.text.secondary} ${colors.background.hover} transition-colors`}
-            >
-              <LogOut className="h-5 w-5 mr-2 inline-block" />
-              Logout
-            </button>
+          <div className="border-t border-gray-200 pt-4 pb-3">
+            <div className="flex items-center px-4 space-x-3">
+              <button
+                onClick={toggleTheme}
+                className={`p-2 rounded-md transition-colors ${colors.background.hover} ${colors.text.secondary}`}
+              >
+                {theme === 'light' ? '🌙' : '☀️'}
+              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={onLogout}
+                  className={`flex-1 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm transition-colors ${colors.button.secondary}`}
+                >
+                  <ArrowRightOnRectangleIcon className="h-4 w-4 mr-2" />
+                  Logout
+                </button>
+              ) : (
+                <button
+                  onClick={onLogin}
+                  className={`flex-1 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm transition-colors ${colors.button.primary}`}
+                >
+                  <UserIcon className="h-4 w-4 mr-2" />
+                  Login
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

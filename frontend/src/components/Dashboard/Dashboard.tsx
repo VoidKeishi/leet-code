@@ -7,7 +7,11 @@ import { BookOpen, Calendar, CheckCircle, Clock, Check } from 'lucide-react';
 import { colors, getDifficultyColor, getPriorityColor } from '../../theme/colors';
 import { useTheme } from '../../context/ThemeContext';
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  isGuest?: boolean;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ isGuest = false }) => {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,13 +75,22 @@ const Dashboard: React.FC = () => {
   return (
     <div className={`space-y-6 ${colors.background.primary} min-h-screen p-6`}>
       <div className="flex justify-between items-center">
-        <h1 className={`text-3xl font-bold ${colors.text.primary}`}>Dashboard</h1>
-        <Link
-          to="/problems/new"
-          className={`px-4 py-2 rounded-md transition-colors ${colors.button.primary}`}
-        >
-          Add Problem
-        </Link>
+        <div>
+          <h1 className={`text-3xl font-bold ${colors.text.primary}`}>Dashboard</h1>
+          {isGuest && (
+            <p className={`text-sm ${colors.text.secondary} mt-1`}>
+              You're viewing in guest mode. Login to create and edit problems.
+            </p>
+          )}
+        </div>
+        {!isGuest && (
+          <Link
+            to="/problems/new"
+            className={`px-4 py-2 rounded-md transition-colors ${colors.button.primary}`}
+          >
+            Add Problem
+          </Link>
+        )}
       </div>
 
       {/* Stats Grid */}
@@ -217,7 +230,11 @@ const Dashboard: React.FC = () => {
                     {problem.number}. {problem.title}
                   </Link>
                   <div className="flex items-center mt-1">
-                    <span className={`px-2 py-1 text-xs rounded ${getDifficultyColor(problem.difficulty)}`}>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      problem.difficulty === 'Easy' ? `${colors.difficulty.easy.bg} ${colors.difficulty.easy.text}` :
+                      problem.difficulty === 'Medium' ? `${colors.difficulty.medium.bg} ${colors.difficulty.medium.text}` :
+                      `${colors.difficulty.hard.bg} ${colors.difficulty.hard.text}`
+                    }`}>
                       {problem.difficulty}
                     </span>
                   </div>
@@ -234,7 +251,7 @@ const Dashboard: React.FC = () => {
       {/* Upcoming Todos */}
       <div className={`${colors.background.card} p-6 rounded-lg shadow`}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className={`text-lg font-medium ${colors.text.primary}`}>Upcoming Todos</h3>
+          <h3 className={`text-lg font-medium ${colors.text.primary}`}>Recent Todos</h3>
           <Link to="/planning" className={`${colors.text.link} ${colors.text.linkHover}`}>
             View all
           </Link>
@@ -245,7 +262,11 @@ const Dashboard: React.FC = () => {
               <div className="flex-1">
                 <div className="flex items-center space-x-3">
                   <p className={`font-medium ${colors.text.primary}`}>{todo.name}</p>
-                  <span className={`px-2 py-1 text-xs rounded ${getDifficultyColor(todo.difficulty)}`}>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    todo.difficulty === 'Easy' ? `${colors.difficulty.easy.bg} ${colors.difficulty.easy.text}` :
+                    todo.difficulty === 'Medium' ? `${colors.difficulty.medium.bg} ${colors.difficulty.medium.text}` :
+                    `${colors.difficulty.hard.bg} ${colors.difficulty.hard.text}`
+                  }`}>
                     {todo.difficulty}
                   </span>
                   {todo.link && (

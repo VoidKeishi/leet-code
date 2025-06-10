@@ -1,23 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import './App.css';
-import { colors } from './theme/colors'; // Import the centralized colors
-import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
-
-// Components
-import Login from './components/Auth/Login';
+import { supabase, authService } from './services/supabase';
 import Navbar from './components/Layout/Navbar';
+import Login from './components/Auth/Login';
 import Dashboard from './components/Dashboard/Dashboard';
 import Problems from './components/Problems/Problems';
 import ProblemView from './components/Problems/ProblemView';
 import ProblemEditor from './components/Problems/ProblemEditor';
 import Planning from './components/Planning/Planning';
 import Graph from './components/Graph/Graph';
-import { supabase, authService } from './services/supabase'; // Import supabase client and authService
+import { colors } from './theme/colors';
+import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -32,11 +30,9 @@ function App() {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session?.user);
-      // localStorage.removeItem('leetcode-auth'); // Clean up old local storage item if it exists
-      
-      // Handle specific events if needed
-      // if (event === 'SIGNED_IN') { /* User signed in */ }
-      // if (event === 'SIGNED_OUT') { /* User signed out */ }
+      if (event === 'SIGNED_IN') {
+        setShowLogin(false);
+      }
     });
 
     // Cleanup listener on component unmount
@@ -46,19 +42,22 @@ function App() {
   }, []);
 
   const handleLogin = (success: boolean) => {
-    // setIsAuthenticated(success); 
-    // This is now primarily handled by the onAuthStateChange listener.
-    // You might still use this callback for UI changes immediate to login action if needed.
     if (success) {
-      // console.log("Login successful, auth state will update via listener.");
+      setShowLogin(false);
     }
+  };
+
+  const handleShowLogin = () => {
+    setShowLogin(true);
   };
 
   const handleLogout = async () => {
     await authService.signOut();
-    // setIsAuthenticated(false); 
-    // This is also handled by onAuthStateChange.
-    // localStorage.removeItem('leetcode-auth'); // Supabase client manages its own session.
+    setShowLogin(false);
+  };
+
+  const handleCloseLogin = () => {
+    setShowLogin(false);
   };
 
   if (loading) {
@@ -69,25 +68,63 @@ function App() {
     );
   }
 
-  // No need to pass onLogin to Login component if auth is handled by context/listener
-  // However, if Login component needs to trigger UI changes not covered by global state, keep it.
-  if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} />;
-  }
-
   return (
-    <ThemeProvider> {/* Wrap the Router with ThemeProvider */}
+    <ThemeProvider>
       <Router>
         <div className={`min-h-screen ${colors.background.primary}`}>
-          <Navbar onLogout={handleLogout} />
+          <Navbar 
+            isAuthenticated={isAuthenticated}
+            onLogin={handleShowLogin}
+            onLogout={handleLogout}
+          />
+          
+          {/* Login Modal */}
+          {showLogin && (
+            <Login 
+              onLogin={handleLogin} 
+              onClose={handleCloseLogin}
+              isModal={true}
+            />
+          )}
+
           <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/problems" element={<Problems />} />
-              <Route path="/problems/new" element={<ProblemEditor />} />
-              <Route path="/problems/:id" element={<ProblemView />} />
-              <Route path="/problems/:id/edit" element={<ProblemEditor />} />
-              <Route path="/planning" element={<Planning />} />
+              <Route path="/" element={<Dashboard isGuest={!isAuthenticated} />} />
+              <Route path="/problems" element={<Problems isGuest={!isAuthenticated} />} />
+              <Route path="/problems/:id" element={<ProblemView isGuest={!isAuthenticated} />} />
+              <Route 
+                path="/problems/new" 
+                element={
+                  isAuthenticated ? 
+                  <ProblemEditor /> : 
+                  <div className={`text-center py-8 ${colors.text.primary}`}>
+                    <p>Please log in to create new problems.</p>
+                    <button 
+                      onClick={handleShowLogin}
+                      className={`mt-4 px-4 py-2 rounded-md ${colors.button.primary}`}
+                    >
+                      Log In
+                    </button>
+                  </div>
+                } 
+              />
+              <Route 
+                path="/problems/:id/edit" 
+                element={
+                  isAuthenticated ? 
+                  <ProblemEditor /> : 
+                  <div className={`text-center py-8 ${colors.text.primary}`}>
+                    <p>Please log in to edit problems.</p>
+                    <button 
+                      onClick={handleShowLogin}
+                      className={`mt-4 px-4 py-2 rounded-md ${colors.button.primary}`}
+                    >
+                      Log In
+                    </button>
+                  </div>
+                } 
+              />
+              <Route path="/planning" element={<Planning isGuest={!isAuthenticated} />} />
               <Route path="/graph" element={<Graph />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
