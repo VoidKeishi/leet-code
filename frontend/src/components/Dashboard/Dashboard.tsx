@@ -5,7 +5,6 @@ import { Problem, TodoItem } from '../../types';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { BookOpen, Calendar, CheckCircle, Clock, Check } from 'lucide-react';
 import { colors } from '../../theme/colors';
-import { useTheme } from '../../context/ThemeContext';
 
 interface DashboardProps {
   isGuest?: boolean;
@@ -15,7 +14,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isGuest = false }) => {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const { theme } = useTheme();
 
   useEffect(() => {
     loadData();
@@ -54,19 +52,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isGuest = false }) => {
 
   const recentProblems = problems.slice(0, 5);
   const upcomingTodos = todos.filter(t => !t.completed).slice(0, 5);
-
-  const RADIAN = Math.PI / 180;
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }: any) => {
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-    return (
-      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
-        {`${name} (${value})`}
-      </text>
-    );
-  };
 
   if (loading) {
     return <div className={`text-center py-8 ${colors.text.primary}`}>Loading dashboard...</div>;
