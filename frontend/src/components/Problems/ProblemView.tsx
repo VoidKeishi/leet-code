@@ -5,7 +5,7 @@ import { Problem } from '../../types';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ArrowLeftIcon, PencilIcon } from '@heroicons/react/24/solid';
-import { colors, getDifficultyColor, materialColors, components } from '../../theme/colors';
+import { colors, components } from '../../theme/colors';
 import { useTheme } from '../../context/ThemeContext';
 
 interface ProblemViewProps {

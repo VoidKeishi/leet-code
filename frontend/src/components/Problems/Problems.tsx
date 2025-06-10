@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { problemsService } from '../../services/database';
 import { Problem } from '../../types';
-import { Search, PlusCircle, Edit, ExternalLink } from 'lucide-react';
-import { colors, getDifficultyColor } from '../../theme/colors';
+import { Search, Edit, ExternalLink } from 'lucide-react';
+import { colors } from '../../theme/colors';
 
 interface ProblemsProps {
   isGuest?: boolean;

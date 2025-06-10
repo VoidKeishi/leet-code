@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Trash2, Upload, Download, ExternalLink, CheckCircle, Circle, FileText, X } from 'lucide-react';
 import { colors } from '../../theme/colors';
-import { useTheme } from '../../context/ThemeContext';
 import { todosService } from '../../services/database';
 import { TodoItem } from '../../types';
 
@@ -10,7 +9,6 @@ interface PlanningProps {
 }
 
 const Planning: React.FC<PlanningProps> = ({ isGuest = false }) => {
-  const { theme } = useTheme();
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showTemplate, setShowTemplate] = useState(false);

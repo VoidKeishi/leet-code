@@ -4,7 +4,7 @@ import { problemsService, todosService } from '../../services/database';
 import { Problem, TodoItem } from '../../types';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { BookOpen, Calendar, CheckCircle, Clock, Check } from 'lucide-react';
-import { colors, getDifficultyColor, getPriorityColor } from '../../theme/colors';
+import { colors } from '../../theme/colors';
 import { useTheme } from '../../context/ThemeContext';
 
 interface DashboardProps {

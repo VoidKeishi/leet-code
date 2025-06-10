@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Problem } from '../../types';
 import { problemsService } from '../../services/database';
 import { Save, XCircle, AlertTriangle, Trash2, Eye, Loader2, ExternalLink, Code, Clock, Zap, Lightbulb } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { colors } from '../../theme/colors';
