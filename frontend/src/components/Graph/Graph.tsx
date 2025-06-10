@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { problemsService } from '../../services/database';
 import { Problem } from '../../types';
 import { RefreshCw, ZoomIn, ZoomOut, Filter } from 'lucide-react';
+import { colors } from '../../theme/colors';
+import { useTheme } from '../../context/ThemeContext';
 
 interface Node {
   id: string;
@@ -29,6 +31,7 @@ const Graph: React.FC = () => {
   const [scale, setScale] = useState(1);
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
   const [selectedTag, setSelectedTag] = useState('');
+  const { theme } = useTheme();
 
   const generateGraph = useCallback(() => {
     let filteredProblems = problems;
@@ -145,19 +148,21 @@ const Graph: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Clear canvas with theme-appropriate background
+    const canvasBg = theme === 'dark' ? '#1f2937' : '#f9fafb';
+    ctx.fillStyle = canvasBg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Apply scaling
     ctx.save();
     ctx.scale(scale, scale);
 
-    // Draw edges
-    ctx.strokeStyle = '#e5e7eb';
+    // Draw edges with theme-appropriate colors
+    ctx.strokeStyle = theme === 'dark' ? '#4b5563' : '#d1d5db';
     ctx.lineWidth = 1;
     edges.forEach(edge => {
-      const sourceNode = nodes.find(n => n.id === edge.source); // Renamed to avoid conflict
-      const targetNode = nodes.find(n => n.id === edge.target); // Renamed to avoid conflict
+      const sourceNode = nodes.find(n => n.id === edge.source);
+      const targetNode = nodes.find(n => n.id === edge.target);
       
       if (sourceNode && targetNode) {
         ctx.beginPath();
@@ -167,20 +172,20 @@ const Graph: React.FC = () => {
       }
     });
 
-    // Draw nodes
+    // Draw nodes with centralized colors
     nodes.forEach(node => {
       const radius = 8;
       let color = '#6366f1'; // Default indigo
       
       switch (node.difficulty) {
         case 'Easy':
-          color = '#10b981'; // Green
+          color = '#10b981'; // Green - matches colors.chart.easy
           break;
         case 'Medium':
-          color = '#f59e0b'; // Yellow
+          color = '#f59e0b'; // Amber - matches colors.chart.medium
           break;
         case 'Hard':
-          color = '#ef4444'; // Red
+          color = '#ef4444'; // Red - matches colors.chart.hard
           break;
       }
 
@@ -190,21 +195,21 @@ const Graph: React.FC = () => {
       ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
       ctx.fill();
 
-      // Draw node border
-      ctx.strokeStyle = '#ffffff';
+      // Draw node border with theme-appropriate color
+      ctx.strokeStyle = theme === 'dark' ? '#374151' : '#ffffff';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Draw label
-      ctx.fillStyle = '#374151';
-      ctx.font = '12px Arial';
+      // Draw label with theme-appropriate color
+      ctx.fillStyle = theme === 'dark' ? '#e5e7eb' : '#374151';
+      ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
       ctx.textAlign = 'center';
       const shortLabel = node.label.length > 20 ? node.label.substring(0, 20) + '...' : node.label;
       ctx.fillText(shortLabel, node.x, node.y + radius + 15);
     });
 
     ctx.restore();
-  }, [nodes, edges, scale, canvasRef]);
+  }, [nodes, edges, scale, theme, canvasRef]);
 
   const loadProblems = async () => {
     try {
@@ -251,31 +256,31 @@ const Graph: React.FC = () => {
   }, [setScale, generateGraph]);
 
   if (loading) {
-    return <div className="text-center py-8">Loading graph...</div>;
+    return <div className={`text-center py-8 ${colors.text.primary}`}>Loading graph...</div>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${colors.background.primary} min-h-screen p-6`}>
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Problem Graph</h1>
+        <h1 className={`text-3xl font-bold ${colors.text.primary}`}>Problem Graph</h1>
         <div className="flex items-center space-x-2">
           <button
             onClick={handleZoomOut}
-            className="p-2 text-gray-400 hover:text-gray-600"
+            className={`p-2 ${colors.text.secondary} ${colors.text.linkHover} transition-colors`}
             title="Zoom Out"
           >
             <ZoomOut className="w-5 h-5" />
           </button>
           <button
             onClick={handleZoomIn}
-            className="p-2 text-gray-400 hover:text-gray-600"
+            className={`p-2 ${colors.text.secondary} ${colors.text.linkHover} transition-colors`}
             title="Zoom In"
           >
             <ZoomIn className="w-5 h-5" />
           </button>
           <button
             onClick={handleReset}
-            className="p-2 text-gray-400 hover:text-gray-600"
+            className={`p-2 ${colors.text.secondary} ${colors.text.linkHover} transition-colors`}
             title="Reset"
           >
             <RefreshCw className="w-5 h-5" />
@@ -284,49 +289,60 @@ const Graph: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <div className="flex items-center space-x-4">
+      <div className={`${colors.background.card} p-4 rounded-lg shadow border ${colors.border.primary}`}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <span className="text-sm font-medium text-gray-700">Filters:</span>
+            <Filter className={`w-4 h-4 ${colors.text.secondary}`} />
+            <span className={`text-sm font-medium ${colors.text.primary}`}>Filters:</span>
           </div>
-          <select
-            value={selectedDifficulty}
-            onChange={(e) => setSelectedDifficulty(e.target.value)}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="All">All Difficulties</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
-          </select>
-          <input
-            type="text"
-            placeholder="Filter by tag..."
-            value={selectedTag}
-            onChange={(e) => setSelectedTag(e.target.value)}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          />
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <select
+              value={selectedDifficulty}
+              onChange={(e) => setSelectedDifficulty(e.target.value)}
+              className={`px-3 py-2 border rounded-md text-sm ${colors.input.base} ${colors.input.focus} transition-colors`}
+            >
+              <option value="All">All Difficulties</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Filter by tag..."
+              value={selectedTag}
+              onChange={(e) => setSelectedTag(e.target.value)}
+              className={`px-3 py-2 border rounded-md text-sm ${colors.input.base} ${colors.input.focus} transition-colors`}
+            />
+          </div>
         </div>
       </div>
 
       {/* Graph Canvas */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="mb-4">
-          <h2 className="text-lg font-medium text-gray-900 mb-2">
+      <div className={`${colors.background.card} rounded-lg shadow p-6 border ${colors.border.primary}`}>
+        <div className="mb-6">
+          <h2 className={`text-lg font-medium ${colors.text.primary} mb-2`}>
             Problem Connections ({nodes.length} problems, {edges.length} connections)
           </h2>
-          <p className="text-sm text-gray-600">
+          <p className={`text-sm ${colors.text.secondary} mb-4`}>
             Problems are connected when they share tags. Node colors represent difficulty:
-            <span className="ml-2">
-              <span className="inline-block w-3 h-3 bg-green-500 rounded-full mr-1"></span>Easy
-              <span className="inline-block w-3 h-3 bg-yellow-500 rounded-full mr-1 ml-3"></span>Medium
-              <span className="inline-block w-3 h-3 bg-red-500 rounded-full mr-1 ml-3"></span>Hard
-            </span>
           </p>
+          <div className="flex flex-wrap gap-4 text-sm">
+            <div className="flex items-center">
+              <span className="inline-block w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+              <span className={colors.text.secondary}>Easy</span>
+            </div>
+            <div className="flex items-center">
+              <span className="inline-block w-3 h-3 bg-amber-500 rounded-full mr-2"></span>
+              <span className={colors.text.secondary}>Medium</span>
+            </div>
+            <div className="flex items-center">
+              <span className="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+              <span className={colors.text.secondary}>Hard</span>
+            </div>
+          </div>
         </div>
         
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className={`border rounded-lg overflow-hidden ${colors.border.primary}`}>
           <canvas
             ref={canvasRef}
             width={800}
@@ -337,27 +353,27 @@ const Graph: React.FC = () => {
         </div>
         
         {nodes.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
+          <div className={`text-center py-8 ${colors.text.muted}`}>
             No problems to display. {problems.length === 0 ? 'Add some problems first!' : 'Try adjusting your filters.'}
           </div>
         )}
       </div>
 
       {/* Legend */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <h3 className="text-lg font-medium text-gray-900 mb-3">How to Read the Graph</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+      <div className={`${colors.background.card} rounded-lg shadow p-6 border ${colors.border.primary}`}>
+        <h3 className={`text-lg font-medium ${colors.text.primary} mb-4`}>How to Read the Graph</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Nodes (Problems)</h4>
-            <ul className="space-y-1">
+            <h4 className={`font-medium ${colors.text.headings} mb-3`}>Nodes (Problems)</h4>
+            <ul className={`space-y-2 ${colors.text.secondary}`}>
               <li>• Each circle represents a LeetCode problem</li>
               <li>• Color indicates difficulty level</li>
               <li>• Size is consistent for all problems</li>
             </ul>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">Connections (Edges)</h4>
-            <ul className="space-y-1">
+            <h4 className={`font-medium ${colors.text.headings} mb-3`}>Connections (Edges)</h4>
+            <ul className={`space-y-2 ${colors.text.secondary}`}>
               <li>• Lines connect problems with shared tags</li>
               <li>• More shared tags = stronger connection</li>
               <li>• Helps identify problem patterns and topics</li>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+import { colors } from './theme/colors'; // Import the centralized colors
+import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
 
 // Components
 import Login from './components/Auth/Login';
@@ -61,35 +63,38 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-lg text-gray-600 dark:text-gray-400">Loading...</div>
+      <div className={`min-h-screen flex items-center justify-center ${colors.background.primary}`}>
+        <div className={`text-lg ${colors.text.secondary}`}>Loading...</div>
       </div>
     );
   }
 
+  // No need to pass onLogin to Login component if auth is handled by context/listener
+  // However, if Login component needs to trigger UI changes not covered by global state, keep it.
   if (!isAuthenticated) {
-    // Pass onLogin to Login component
     return <Login onLogin={handleLogin} />;
   }
 
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Navbar onLogout={handleLogout} />
-        <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/problems" element={<Problems />} />
-            <Route path="/problems/new" element={<ProblemEditor />} />
-            <Route path="/problems/:id" element={<ProblemView />} />
-            <Route path="/problems/:id/edit" element={<ProblemEditor />} />
-            <Route path="/planning" element={<Planning />} />
-            <Route path="/graph" element={<Graph />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+    <ThemeProvider> {/* Wrap the Router with ThemeProvider */}
+      <Router>
+        <div className={`min-h-screen ${colors.background.primary}`}>
+          <Navbar onLogout={handleLogout} />
+          <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/problems" element={<Problems />} />
+              <Route path="/problems/new" element={<ProblemEditor />} />
+              <Route path="/problems/:id" element={<ProblemView />} />
+              <Route path="/problems/:id/edit" element={<ProblemEditor />} />
+              <Route path="/planning" element={<Planning />} />
+              <Route path="/graph" element={<Graph />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 }
 

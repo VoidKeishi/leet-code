@@ -71,7 +71,7 @@ export const todosService = {
     return await supabase
       .from('todos')
       .select('*')
-      .order('deadline', { ascending: true });
+      .order('created_at', { ascending: false });
   },
 
   async createTodo(todo: Omit<TodoItem, 'id' | 'created_at' | 'updated_at' | 'completed'>) {
@@ -110,7 +110,7 @@ export const todosService = {
       .from('todos')
       .select('*')
       .eq('completed', false)
-      .order('deadline', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(limit);
   }
 };

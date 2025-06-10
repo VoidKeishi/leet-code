@@ -23,15 +23,14 @@ export interface Implementation {
 }
 
 export interface TodoItem {
-  id: string; // Or number
-  problem_number: number;
-  problem_title: string;
-  deadline: string; // ISO date string
-  priority: 'Low' | 'Medium' | 'High';
+  id: string;
+  name: string; // Problem name
+  link: string; // LeetCode URL
+  difficulty: 'Easy' | 'Medium' | 'Hard';
   notes?: string;
   completed: boolean;
-  user_id?: string; // If you associate todos with users
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface User {

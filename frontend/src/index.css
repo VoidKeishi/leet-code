@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200;
+  @apply bg-gray-50 dark:bg-[#121212] text-gray-900 dark:text-[#e1e1e1] transition-colors duration-200;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -13,112 +13,239 @@ body {
 }
 
 code {
-  @apply dark:text-gray-300;
+  @apply dark:text-[#bb86fc];
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
 
-/* Add more specific dark mode styles as needed */
+/* Material Design Dark Theme specific styles */
 .dark .shadow {
-  @apply shadow-gray-700;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .dark .bg-white {
-  @apply bg-gray-800 text-gray-100;
+  @apply bg-[#1e1e1e] text-[#e1e1e1];
 }
 
 .dark .bg-gray-50 {
-  @apply bg-gray-900 text-gray-100;
+  @apply bg-[#121212] text-[#e1e1e1];
 }
 
 .dark .text-gray-900 {
-  @apply text-gray-100;
+  @apply text-[#ffffff];
 }
 
 .dark .text-gray-800 {
-  @apply text-gray-200;
+  @apply text-[#e1e1e1];
 }
 
 .dark .text-gray-700 {
-  @apply text-gray-300;
+  @apply text-[#c4c4c4];
 }
 
 .dark .text-gray-600 {
-  @apply text-gray-400;
+  @apply text-[#a6a6a6];
 }
 
 .dark .text-gray-500 {
-  @apply text-gray-400;
+  @apply text-[#8a8a8a];
+}
+
+.dark .text-gray-400 {
+  @apply text-[#6e6e6e];
+}
+
+.dark .text-gray-300 {
+  @apply text-[#c4c4c4];
 }
 
 .dark .border-gray-200 {
-  @apply border-gray-700;
+  @apply border-[#2d2d2d];
 }
 
 .dark .border-gray-300 {
-  @apply border-gray-600;
+  @apply border-[#404040];
+}
+
+.dark .border-gray-600 {
+  @apply border-[#525252];
+}
+
+.dark .border-gray-700 {
+  @apply border-[#404040];
 }
 
 .dark .hover\:bg-gray-50:hover {
- @apply hover:bg-gray-700;
+ @apply hover:bg-[#2d2d2d];
+}
+
+.dark .hover\:bg-gray-700:hover {
+ @apply hover:bg-[#333333];
 }
 
 .dark .hover\:text-gray-700:hover {
-  @apply hover:text-gray-300;
+  @apply hover:text-[#ffffff];
+}
+
+.dark .hover\:text-gray-600:hover {
+  @apply hover:text-[#ffffff];
+}
+
+.dark .hover\:text-gray-300:hover {
+  @apply hover:text-[#ffffff];
 }
 
 .dark .hover\:border-gray-300:hover {
-  @apply hover:border-gray-500;
+  @apply hover:border-[#525252];
 }
 
-/* Specific component adjustments for dark mode */
+.dark .hover\:border-gray-500:hover {
+  @apply hover:border-[#6e6e6e];
+}
+
+/* Material Design color improvements for components */
 .dark .bg-indigo-100 {
-  @apply bg-indigo-800 text-indigo-200;
+  @apply bg-[#3d2e7c] text-[#c4b5fd];
 }
 
 .dark .text-indigo-700 {
-  @apply text-indigo-300;
+  @apply text-[#a78bfa];
+}
+
+.dark .text-indigo-600 {
+  @apply text-[#a78bfa];
+}
+
+.dark .dark\:text-indigo-400 {
+  @apply text-[#c4b5fd];
 }
 
 .dark .bg-green-100 {
-  @apply bg-green-800 text-green-200;
+  @apply bg-[#1b5e20] text-[#a5d6a7];
 }
+
 .dark .text-green-800 {
-  @apply text-green-300;
+  @apply text-[#81c784];
+}
+
+.dark .bg-green-700 {
+  @apply bg-[#2e7d32];
+}
+
+.dark .text-green-200 {
+  @apply text-[#c8e6c9];
 }
 
 .dark .bg-yellow-100 {
-  @apply bg-yellow-800 text-yellow-200;
+  @apply bg-[#f57f17] text-[#fff8e1];
 }
+
 .dark .text-yellow-800 {
-  @apply text-yellow-300;
+  @apply text-[#ffecb3];
+}
+
+.dark .bg-yellow-700 {
+  @apply bg-[#f9a825];
+}
+
+.dark .text-yellow-200 {
+  @apply text-[#fff8e1];
 }
 
 .dark .bg-red-100 {
-  @apply bg-red-800 text-red-200;
+  @apply bg-[#c62828] text-[#ffcdd2];
 }
+
 .dark .text-red-800 {
-  @apply text-red-300;
+  @apply text-[#ef9a9a];
+}
+
+.dark .bg-red-700 {
+  @apply bg-[#d32f2f];
+}
+
+.dark .text-red-200 {
+  @apply text-[#ffcdd2];
 }
 
 .dark .hover\:bg-indigo-700:hover {
-  @apply hover:bg-indigo-500;
+  @apply hover:bg-[#5b21b6];
 }
 
 .dark .focus\:ring-indigo-500:focus {
-  @apply focus:ring-indigo-400;
+  @apply focus:ring-[#8b5cf6];
 }
 
 .dark .focus\:border-indigo-500:focus {
-  @apply focus:border-indigo-400;
+  @apply focus:border-[#8b5cf6];
 }
 
+.dark .focus\:ring-indigo-400:focus {
+  @apply focus:ring-[#a78bfa];
+}
+
+.dark .focus\:border-indigo-400:focus {
+  @apply focus:border-[#a78bfa];
+}
+
+/* Enhanced form controls for Material Design Dark Theme */
 .dark input,
 .dark select,
 .dark textarea {
-  @apply bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-indigo-400 focus:border-indigo-400;
+  @apply bg-[#2d2d2d] border-[#525252] text-[#e1e1e1] placeholder-[#8a8a8a] focus:ring-[#8b5cf6] focus:border-[#8b5cf6];
 }
 
 .dark .shadow-md {
-  @apply shadow-lg shadow-gray-800;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.dark .shadow-lg {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Additional Material Design improvements */
+.dark .bg-gray-100 {
+  @apply bg-[#2d2d2d] text-[#e1e1e1];
+}
+
+.dark .bg-gray-600 {
+  @apply bg-[#404040] text-[#e1e1e1];
+}
+
+.dark .bg-gray-700 {
+  @apply bg-[#333333] text-[#e1e1e1];
+}
+
+.dark .bg-gray-800 {
+  @apply bg-[#1e1e1e] text-[#e1e1e1];
+}
+
+.dark .bg-gray-850 {
+  @apply bg-[#1a1a1a];
+}
+
+.dark .bg-gray-900 {
+  @apply bg-[#121212] text-[#e1e1e1];
+}
+
+/* Button improvements */
+.dark .bg-indigo-600 {
+  @apply bg-[#7c3aed];
+}
+
+.dark .hover\:bg-indigo-700:hover {
+  @apply hover:bg-[#6d28d9];
+}
+
+/* Specific improvements for better contrast and hierarchy */
+.dark .text-indigo-500 {
+  @apply text-[#a78bfa];
+}
+
+.dark .hover\:text-indigo-700:hover {
+  @apply hover:text-[#c4b5fd];
+}
+
+.dark .hover\:text-indigo-300:hover {
+  @apply hover:text-[#ddd6fe];
 }

@@ -1,240 +1,178 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom'; // Added useParams
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { problemsService } from '../../services/database';
+import React, { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
 import { Problem } from '../../types';
-import { ArrowLeft, Edit3, Trash2, Tag, ExternalLink, Brain, Code, Clock, Zap } from 'lucide-react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { ArrowLeftIcon, PencilIcon } from '@heroicons/react/24/solid';
+import { colors, getDifficultyColor } from '../../theme/colors';
+import { useTheme } from '../../context/ThemeContext';
 
 const ProblemView: React.FC = () => {
-  const { id } = useParams<{ id: string }>(); // Ensure id is typed if using TS
-  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // Added error state
+  const [error, setError] = useState<string | null>(null);
+  const { theme } = useTheme();
 
-  const loadProblem = useCallback(async () => {
-    if (!id) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const { data, error: fetchError } = await problemsService.getProblemById(id);
-      if (fetchError) throw fetchError;
-      if (data) {
-        setProblem(data);
-      } else {
-        setError("Problem not found.");
-      }
-    } catch (err: any) {
-      console.error('Error loading problem:', err);
-      setError(err.message || "Failed to load problem.");
-    } finally {
-      setLoading(false);
-    }
-  }, [id, setLoading, setError, setProblem]);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (id) {
-      loadProblem();
-    }
-  }, [id, loadProblem]);
-
-  const handleDelete = async () => {
-    if (!id || !problem) return;
-    if (window.confirm(`Are you sure you want to delete "${problem.title}"?`)) {
-      try {
-        const { error: deleteError } = await problemsService.deleteProblem(id);
-        if (deleteError) throw deleteError;
-        navigate('/problems');
-      } catch (err: any) {
-        console.error('Error deleting problem:', err);
-        setError(err.message || "Failed to delete problem.");
-        // Optionally, display a more user-friendly error message
+    const fetchProblem = async () => {
+      if (!id) {
+        setError('Problem ID is missing.');
+        setLoading(false);
+        return;
       }
-    }
-  };
+      setLoading(true);
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('problems')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (fetchError) {
+          throw fetchError;
+        }
+        if (data) {
+          setProblem(data as Problem);
+        } else {
+          setError('Problem not found.');
+        }
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch problem details.');
+        console.error('Error fetching problem:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProblem();
+  }, [id]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-lg text-gray-600">Loading problem...</div>
-      </div>
-    );
+    return <div className={`text-center p-8 ${colors.text.primary}`}>Loading problem details...</div>;
   }
 
-  if (error) { // Display error message if error state is set
-    return (
-      <div className="text-center py-12">
-        <div className="text-lg text-red-600 mb-4">{error}</div>
-        <Link to="/problems" className="text-indigo-600 hover:text-indigo-700">
-          Back to Problems
-        </Link>
-      </div>
-    );
+  if (error) {
+    return <div className={`text-center p-8 ${colors.text.error}`}>{error}</div>;
   }
-  
-  if (!problem) { // If no error but problem is still null (e.g. not found and no error thrown)
-    return (
-      <div className="text-center py-12">
-        <div className="text-lg text-gray-600 mb-4">Problem not found</div>
-        <Link to="/problems" className="text-indigo-600 hover:text-indigo-700">
-          Back to Problems
-        </Link>
-      </div>
-    );
+
+  if (!problem) {
+    return <div className={`text-center p-8 ${colors.text.secondary}`}>No problem data available.</div>;
   }
+
+  // Use more subtle themes that match the UI better
+  const highlighterTheme = theme === 'dark' ? vscDarkPlus : vs;
 
   return (
-    <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <button
-            onClick={() => navigate('/problems')}
-            className="mb-4 inline-flex items-center text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Problems
-          </button>
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 flex items-center">
-            {problem.number}. {problem.title}
-            {problem.url && (
-              <a 
-                href={problem.url} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="ml-3 text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
-                title="View on LeetCode"
-              >
-                <ExternalLink className="w-5 h-5" />
-              </a>
-            )}
-          </h1>
-        </div>
-        <div className="flex space-x-3">
-          <Link
-            to={`/problems/${problem.id}/edit`}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-          >
-            <Edit3 className="w-4 h-4 mr-2" />
-            Edit
-          </Link>
-          <button
-            onClick={handleDelete}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
-          </button>
-        </div>
+    <div className={`p-4 md:p-6 lg:p-8 min-h-screen ${colors.background.primary}`}>
+      <div className="mb-6 flex justify-between items-center">
+        <Link
+          to="/problems"
+          className={`flex items-center ${colors.text.link} ${colors.text.linkHover} transition-colors`}
+        >
+          <ArrowLeftIcon className="h-5 w-5 mr-2" />
+          Back to Problems
+        </Link>
+        <Link
+          to={`/problems/${problem.id}/edit`}
+          className={`py-2 px-4 ${colors.button.secondary} ${colors.button.secondaryHover} font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 ${colors.primary.ring} focus:ring-opacity-75 transition-colors`}
+        >
+          <PencilIcon className="h-5 w-5 mr-2 inline" />
+          Edit Problem
+        </Link>
       </div>
 
-      <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${ 
-            problem.difficulty === 'Easy' ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-200' :
-            problem.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200' :
-            'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-200'
-          }`}>
-            {problem.difficulty}
-          </span>
-          <div className="flex items-center">
-            <Tag className="w-4 h-4 mr-1.5 text-gray-400 dark:text-gray-500" />
-            <span>{problem.tags.join(', ') || 'No tags'}</span>
+      <div className={`${colors.background.card} shadow-lg rounded-lg overflow-hidden border ${colors.border.primary}`}>
+        <div className="p-6">
+          <div className="flex flex-col md:flex-row justify-between md:items-center mb-4">
+            <h1 className={`text-3xl font-bold ${colors.text.headings} mb-2 md:mb-0`}>
+              {problem.number}. {problem.title}
+            </h1>
+            <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getDifficultyColor(problem.difficulty)}`}>
+              {problem.difficulty}
+            </span>
           </div>
-        </div>
-        {(problem.time_complexity || problem.space_complexity) && (
-            <div className="mt-4 flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
-                {problem.time_complexity && (
-                    <div className="flex items-center">
-                        <Clock className="w-4 h-4 mr-1.5 text-gray-400 dark:text-gray-500" />
-                        <span>Time: {problem.time_complexity}</span>
-                    </div>
-                )}
-                {problem.space_complexity && (
-                    <div className="flex items-center">
-                        <Zap className="w-4 h-4 mr-1.5 text-gray-400 dark:text-gray-500" />
-                        <span>Space: {problem.space_complexity}</span>
-                    </div>
-                )}
+
+          {problem.url && (
+            <div className="mb-4">
+              <a
+                href={problem.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${colors.text.link} ${colors.text.linkHover} underline transition-colors`}
+              >
+                View on LeetCode
+              </a>
             </div>
+          )}
+
+          <div className="mb-6">
+            <h2 className={`text-xl font-semibold ${colors.text.headings} mb-3`}>Tags</h2>
+            <div className="flex flex-wrap gap-2">
+              {problem.tags?.map((tag) => (
+                <span key={tag} className={`px-3 py-1 text-sm rounded-md ${colors.tag.default.bg} ${colors.tag.default.text} transition-colors`}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {problem.intuition && (
+            <div className="mb-6">
+              <h2 className={`text-xl font-semibold ${colors.text.headings} mb-3`}>Description/Intuition</h2>
+              <div className={`prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none ${colors.text.primary} dark:prose-invert`}>
+                <p className={`${colors.text.secondary} leading-relaxed`}>{problem.intuition}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {problem.implementation && problem.implementation_language && (
+          <div className="px-6 pb-6">
+            <h2 className={`text-xl font-semibold ${colors.text.headings} mb-4`}>Implementation</h2>
+            <div className={`rounded-lg overflow-hidden border ${colors.border.primary}`}>
+              <SyntaxHighlighter
+                language={problem.implementation_language.toLowerCase()}
+                style={highlighterTheme}
+                showLineNumbers
+                customStyle={{
+                  margin: 0,
+                  borderRadius: '0.5rem',
+                  backgroundColor: theme === 'dark' ? '#1e1e1e' : '#f8f9fa',
+                  border: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
+                }}
+                codeTagProps={{ 
+                  style: { 
+                    fontFamily: '"Fira Code", "JetBrains Mono", "Consolas", monospace',
+                    fontSize: '14px'
+                  } 
+                }}
+              >
+                {problem.implementation}
+              </SyntaxHighlighter>
+            </div>
+          </div>
         )}
+
+        <div className={`border-t ${colors.border.primary} px-6 py-4 ${colors.background.secondary}`}>
+          <div className={`flex flex-col sm:flex-row justify-between gap-2 ${colors.text.secondary} text-sm`}>
+            <span>
+              Time Complexity: <span className={`font-mono ${colors.text.primary}`}>{problem.time_complexity || 'N/A'}</span>
+            </span>
+            <span>
+              Space Complexity: <span className={`font-mono ${colors.text.primary}`}>{problem.space_complexity || 'N/A'}</span>
+            </span>
+          </div>
+          {problem.updated_at && (
+            <p className={`mt-3 text-xs ${colors.text.muted}`}>
+              Last updated: {new Date(problem.updated_at).toLocaleDateString()}
+            </p>
+          )}
+        </div>
       </div>
-
-      {/* Intuition Section (Not side-by-side anymore) */}
-      {problem.intuition && (
-        <div className="mb-8 prose prose-sm dark:prose-invert max-w-none p-4 border dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-850">
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center">
-            <Brain className="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" />Intuition
-          </h3>
-          <ReactMarkdown children={problem.intuition} remarkPlugins={[remarkGfm]} components={markdownComponents()} />
-        </div>
-      )}
-
-      {/* Implementation Section (Not side-by-side anymore) */}
-      {problem.implementation && (
-        <div className="prose prose-sm dark:prose-invert max-w-none p-4 border dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-850">
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center">
-            <Code className="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" />Implementation
-          </h3>
-          {/* Render implementation using SyntaxHighlighter directly for the main code block */}
-          <SyntaxHighlighter
-            children={String(problem.implementation).replace(/\n$/, '')}
-            style={(atomDark as any)} 
-            language={problem.implementation_language || 'plaintext'} 
-            PreTag="div"
-            showLineNumbers
-            wrapLines
-          />
-          {/* If you still want to allow some Markdown within implementation (e.g., for notes around code), 
-              you might need a more complex rendering strategy or instruct users to put notes in Intuition. 
-              For now, this renders the whole implementation field as a single code block. 
-          */}
-        </div>
-      )}
     </div>
   );
 };
-
-// Updated markdownComponents to be a function that can accept language for general use,
-// but for ProblemView, we are using SyntaxHighlighter directly for the main implementation block.
-const markdownComponents = (language?: string) => ({
-  code({node, inline, className, children, ...props}: any) {
-    // For Markdown *within* intuition or other general Markdown fields (not the main implementation block)
-    const match = /language-(\w+)/.exec(className || '');
-    const explicitLanguage = match ? match[1] : language; 
-
-    if (!inline && explicitLanguage) {
-      return (
-        <SyntaxHighlighter
-          children={String(children).replace(/\n$/, '')}
-          style={(atomDark as any)} 
-          language={explicitLanguage}
-          PreTag="div"
-          showLineNumbers
-          wrapLines
-          {...props}
-        />
-      );
-    } else if (!inline) {
-      // Fallback for code blocks within general Markdown without a specified language
-      return (
-        <pre className="bg-gray-100 dark:bg-gray-700 p-2 rounded overflow-x-auto">
-          <code className="text-sm" {...props}>
-            {children}
-          </code>
-        </pre>
-      );
-    }
-    // Inline code
-    return (
-      <code className={`${className || ''} bg-gray-100 dark:bg-gray-700 text-red-500 dark:text-red-400 px-1 py-0.5 rounded text-sm`} {...props}>
-        {children}
-      </code>
-    );
-  }
-});
 
 export default ProblemView;

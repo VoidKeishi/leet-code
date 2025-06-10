@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { problemsService } from '../../services/database';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Problem } from '../../types';
-import { Check, Loader2, ArrowLeft, ExternalLink, Brain, Code, Clock, Zap } from 'lucide-react';
+import { problemsService } from '../../services/database';
+import { Save, XCircle, AlertTriangle, Trash2, Eye, Loader2, ExternalLink, Code, Clock, Zap, Lightbulb } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { colors } from '../../theme/colors';
+import { useTheme } from '../../context/ThemeContext';
 
-const difficultyOptions: Problem['difficulty'][] = ['Easy', 'Medium', 'Hard'];
 const complexityOptions = [
   'O(1)',
   'O(log n)',
@@ -14,7 +19,7 @@ const complexityOptions = [
   'O(n^3)',
   'O(2^n)',
   'O(n!)',
-  'Other', // For custom input
+  'Other',
 ];
 
 const supportedLanguages = [
@@ -37,10 +42,10 @@ const supportedLanguages = [
 ];
 
 const ProblemEditor: React.FC = () => {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const isEditing = Boolean(id);
-
+  const navigate = useNavigate();
+  const { theme } = useTheme();
+  
   const [problem, setProblem] = useState<Partial<Problem>>({
     number: undefined,
     title: '',
@@ -48,23 +53,21 @@ const ProblemEditor: React.FC = () => {
     tags: [],
     intuition: '',
     implementation: '',
-    implementation_language: 'javascript', // Default language
+    implementation_language: 'javascript',
     url: '',
     time_complexity: 'O(n)',
     space_complexity: 'O(1)',
   });
-  const [currentTag, setCurrentTag] = useState('');
+  
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [urlFetching, setUrlFetching] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
-  const [detailsLocked, setDetailsLocked] = useState(false); // New state
-
-  // Remove the isInfoLocked variable as we're simplifying
+  const [problemFetched, setProblemFetched] = useState(false);
 
   useEffect(() => {
-    if (isEditing && id) {
+    if (id) {
       setLoading(true);
       problemsService.getProblemById(id)
         .then(({ data, error }) => {
@@ -77,14 +80,12 @@ const ProblemEditor: React.FC = () => {
               tags: data.tags || [],
               intuition: data.intuition || '',
               implementation: data.implementation || '',
-              implementation_language: data.implementation_language || 'javascript', // Load language
+              implementation_language: data.implementation_language || 'javascript',
               url: data.url || '',
               time_complexity: data.time_complexity || 'O(n)',
               space_complexity: data.space_complexity || 'O(1)',
             });
-            if (data && data.url && data.number && data.title) {
-              setDetailsLocked(true); // Lock fields if essential details and URL exist
-            }
+            setProblemFetched(true);
           }
           setLoading(false);
         })
@@ -94,91 +95,13 @@ const ProblemEditor: React.FC = () => {
           setLoading(false);
         });
     }
-  }, [id, isEditing]);
+  }, [id]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setProblem(prev => ({ ...prev, [name]: value }));
-    if (name === 'url') {
-      setDetailsLocked(false); // Unlock fields if URL is changed
-    }
-  };
-
-  const handleTagAdd = () => {
-    if (detailsLocked) return; // Prevent adding tags if details are locked
-    if (currentTag && !problem.tags?.includes(currentTag)) {
-      setProblem(prev => ({ ...prev, tags: [...(prev.tags || []), currentTag] }));
-      setCurrentTag('');
-    }
-  };
-
-  const handleTagRemove = (tagToRemove: string) => {
-    if (detailsLocked) return; // Prevent removing tags if details are locked
-    setProblem(prev => ({
-      ...prev,
-      tags: prev.tags?.filter(tag => tag !== tagToRemove),
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!problem.title || !problem.number) {
-      setError('Problem number and title are required.');
-      return;
-    }
-    setSaving(true);
-    setError(null);
-
-    const problemDataToSave: Omit<Problem, 'id' | 'created_at' | 'updated_at'> & { id?: string } = {
-      number: Number(problem.number),
-      title: problem.title!,
-      difficulty: problem.difficulty!,
-      tags: problem.tags || [],
-      intuition: problem.intuition || '',
-      implementation: problem.implementation || '',
-      implementation_language: problem.implementation_language || 'javascript', // Save language
-      url: problem.url || '',
-      time_complexity: problem.time_complexity,
-      space_complexity: problem.space_complexity,
-    };
-
-    try {
-      if (isEditing && id) {
-        console.log('Attempting to update problem with ID:', id);
-        console.log('Data to save:', JSON.stringify(problemDataToSave, null, 2));
-        const { data: updateData, error: updateError } = await problemsService.updateProblem(id, problemDataToSave);
-        if (updateError) {
-          console.error('Supabase update error:', updateError);
-          throw updateError; // Propagate Supabase errors
-        }
-        // If no error, but also no data returned (or empty array), it means the record was not found for update or RLS prevented it.
-        if (!updateData || updateData.length === 0) {
-          console.warn('Update operation returned no data, indicating no rows were updated.');
-          throw new Error("Update failed: The problem was not found (it may have been deleted or the ID is incorrect), or the update was not permitted (please check Row Level Security policies in Supabase).");
-        }
-        console.log('Update successful, returned data:', updateData);
-      } else {
-        console.log('Attempting to create new problem with data:', JSON.stringify(problemDataToSave, null, 2));
-        const { data: createData, error: createError } = await problemsService.createProblem(problemDataToSave as Omit<Problem, 'id'>);
-        if (createError) {
-          console.error('Supabase create error:', createError);
-          throw createError;
-        }
-        if (!createData) {
-          console.warn('Create operation returned no data.');
-          throw new Error("Failed to create problem: no data returned from the server. Check RLS policies for insert.");
-        }
-        console.log('Create successful, returned data:', createData);
-      }
-      navigate('/problems');
-    } catch (err: any) {
-      setError('Failed to save problem: ' + (err.message || 'Unknown error'));
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
   };
 
   const fetchProblemDetailsFromUrl = async () => {
@@ -204,6 +127,7 @@ const ProblemEditor: React.FC = () => {
       const result = await response.json();
       const q = result.data?.question;
       if (!q) throw new Error('Problem not found');
+      
       setProblem(prev => ({
         ...prev,
         number: Number(q.questionId),
@@ -211,346 +135,354 @@ const ProblemEditor: React.FC = () => {
         difficulty: q.difficulty as Problem['difficulty'],
         tags: q.topicTags.map((t: any) => t.name),
       }));
-      setDetailsLocked(true); // Lock fields after successful fetch
+      setProblemFetched(true);
     } catch (err: any) {
       setUrlError(err.message || 'Failed to fetch problem details');
-      setDetailsLocked(false); // Ensure fields are not locked on error
+      setProblemFetched(false);
     } finally {
       setUrlFetching(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
-        <p className="ml-4 text-lg">Loading problem...</p>
-      </div>
-    );
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!problem.title || !problem.number) {
+      setError('Problem details must be fetched from URL first.');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+
+    const problemDataToSave: Omit<Problem, 'id' | 'created_at' | 'updated_at'> & { id?: string } = {
+      number: Number(problem.number),
+      title: problem.title!,
+      difficulty: problem.difficulty!,
+      tags: problem.tags || [],
+      intuition: problem.intuition || '',
+      implementation: problem.implementation || '',
+      implementation_language: problem.implementation_language || 'javascript',
+      url: problem.url || '',
+      time_complexity: problem.time_complexity,
+      space_complexity: problem.space_complexity,
+    };
+
+    try {
+      if (id) {
+        const { data: updateData, error: updateError } = await problemsService.updateProblem(id, problemDataToSave);
+        if (updateError) {
+          throw updateError;
+        }
+        if (!updateData || updateData.length === 0) {
+          throw new Error("Update failed: The problem was not found or the update was not permitted.");
+        }
+      } else {
+        const { data: createData, error: createError } = await problemsService.createProblem(problemDataToSave as Omit<Problem, 'id'>);
+        if (createError) {
+          throw createError;
+        }
+        if (!createData) {
+          throw new Error("Failed to create problem: no data returned from the server.");
+        }
+      }
+      navigate('/problems');
+    } catch (err: any) {
+      setError('Failed to save problem: ' + (err.message || 'Unknown error'));
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    if (!window.confirm('Are you sure you want to delete this problem?')) return;
+    
+    setSaving(true);
+    try {
+      await problemsService.deleteProblem(id);
+      navigate('/problems');
+    } catch (err: any) {
+      setError('Failed to delete problem: ' + (err.message || 'Unknown error'));
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading && id) {
+    return <div className={`text-center py-8 ${colors.text.secondary}`}>Loading problem to edit...</div>;
   }
 
-  if (error) {
-    return (
-      <div className="flex flex-col justify-center items-center h-screen text-red-500">
-        <p className="text-xl">{error}</p>
-        <button
-          onClick={() => navigate('/problems')}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
-        >
-          <ArrowLeft size={18} className="mr-2" /> Go Back to Problems
-        </button>
-      </div>
-    );
-  }
+  const highlighterTheme = theme === 'dark' ? vscDarkPlus : vs;
 
   return (
-    <div className="container mx-auto p-4 max-w-3xl bg-white dark:bg-gray-800 shadow-xl rounded-lg">
-      <button
-        onClick={() => navigate(isEditing ? `/problems/${id}` : '/problems')}
-        className="mb-6 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center transition duration-150"
-      >
-        <ArrowLeft size={20} className="mr-2" />
-        {isEditing ? 'Back to Problem View' : 'Back to Problems List'}
-      </button>
-
-      <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-gray-100 border-b pb-4">
-        {isEditing ? 'Edit Problem Details' : 'Add New Problem'}
-      </h1>
-
-      {/* URL Input and Fetch Section - Moved to top */}
-      {!isEditing && (
-        <div className="mb-8 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border">
-          <label htmlFor="url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            LeetCode Problem URL (Optional - Auto-fill details)
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="url"
-              name="url"
-              id="url"
-              value={problem.url || ''}
-              onChange={handleInputChange}
-              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:text-gray-100"
-              placeholder="https://leetcode.com/problems/two-sum/"
-            />
-            <button
-              type="button"
-              onClick={fetchProblemDetailsFromUrl}
-              disabled={urlFetching || !problem.url}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
-            >
-              {urlFetching ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Fetch
-                </>
-              )}
-            </button>
-          </div>
-          {urlFetching && <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">Fetching problem details...</p>}
-          {urlError && <p className="text-sm text-red-600 dark:text-red-400 mt-2">{urlError}</p>}
-        </div>
-      )}
-
-      {/* Fetched Problem Info Display */}
-      {detailsLocked && (
-        <div className="mb-8 p-6 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-800 dark:to-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out">
-          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6 pb-3 border-b border-gray-300 dark:border-gray-600">
-            Fetched Problem Details
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Number Card */}
-            <div className="p-3 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Number</span>
-              <div className="mt-1 text-lg font-semibold text-gray-800 dark:text-gray-100">#{problem.number}</div>
-            </div>
-            {/* Difficulty Card */}
-            <div className="p-3 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Difficulty</span>
-              <div className="mt-1">
-                <span className={`px-2 py-1 rounded text-sm font-medium $ {
-                  problem.difficulty === 'Easy'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200'
-                    : problem.difficulty === 'Medium'
-                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200'
-                    : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-200'
-                }`}> 
-                  {problem.difficulty}
-                </span>
-              </div>
-            </div>
-            {/* Title Card */}
-            <div className="p-3 bg-white dark:bg-gray-700 rounded-lg shadow-sm md:col-span-2">
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Title</span>
-              <div className="mt-1 text-lg font-semibold text-gray-800 dark:text-gray-100 truncate">{problem.title}</div>
-            </div>
-            {/* Tags Card */}
-            <div className="p-3 bg-white dark:bg-gray-700 rounded-lg shadow-sm md:col-span-2">
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Tags</span>
-              <div className="mt-1 flex flex-wrap gap-2">
-                {problem.tags?.map(tag => (
-                  <span key={tag} className="bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-2 py-1 rounded-full text-xs">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-     
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Conditional rendering for manual input fields (Number, Title, Difficulty, Tags) */}
-        { !detailsLocked && (isEditing || (!isEditing && urlError !== null)) && (
-          <>
-            <div>
-              <label htmlFor="number" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Problem Number
-              </label>
-              <input
-                type="number"
-                name="number"
-                id="number"
-                value={problem.number || ''}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:text-gray-100"
-                placeholder="e.g., 1"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Title
-              </label>
-              <input
-                type="text"
-                name="title"
-                id="title"
-                value={problem.title || ''}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:text-gray-100"
-                placeholder="e.g., Two Sum"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Difficulty
-              </label>
-              <select
-                name="difficulty"
-                id="difficulty"
-                value={problem.difficulty || 'Medium'}
-                onChange={handleInputChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:text-gray-100"
+    <div className={`container mx-auto px-4 py-8 ${colors.background.primary}`}>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <h1 className={`text-3xl font-bold ${colors.text.primary}`}>
+            {id ? `Edit Problem` : 'Add New Problem'}
+          </h1>
+          <div className="flex space-x-3 mt-4 md:mt-0">
+            {id && (
+              <button 
+                type="button"
+                onClick={() => navigate(`/problems/${id}`)}
+                className={`inline-flex items-center px-4 py-2 border ${colors.border.primary} rounded-md shadow-sm text-sm font-medium ${colors.text.secondary} ${colors.background.card} ${colors.background.hover}`}
               >
-                {difficultyOptions.map(option => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+                <Eye className="mr-2 h-4 w-4" />
+                View Problem
+              </button>
+            )}
+            <button 
+              type="button"
+              onClick={() => navigate(id ? `/problems/${id}` : '/problems')}
+              className={`inline-flex items-center px-4 py-2 border ${colors.border.primary} rounded-md shadow-sm text-sm font-medium ${colors.text.secondary} ${colors.background.card} ${colors.background.hover}`}
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              disabled={saving || (!problemFetched && !id)}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm ${colors.text.inverse} ${colors.button.primary} ${(saving || (!problemFetched && !id)) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {saving ? 'Saving...' : id ? 'Save Changes' : 'Create Problem'}
+            </button>
+            {id && (
+              <button 
+                type="button"
+                onClick={handleDelete}
+                disabled={saving}
+                className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm ${colors.text.inverse} ${colors.button.danger} ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {saving ? 'Deleting...' : 'Delete'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className={`p-4 mb-6 rounded-md ${colors.status.error} flex items-center`}>
+            <AlertTriangle className="h-5 w-5 mr-3" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* URL Input Section */}
+        {!id && (
+          <div className={`p-6 rounded-lg shadow ${colors.background.card} border ${colors.border.primary}`}>
+            <h2 className={`text-lg font-semibold ${colors.text.primary} mb-4`}>
+              <ExternalLink className="inline mr-2 h-5 w-5" />
+              LeetCode Problem URL
+            </h2>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                name="url"
+                value={problem.url || ''}
+                onChange={handleInputChange}
+                className={`flex-1 border rounded-md shadow-sm p-3 ${colors.input.base} ${colors.input.focus}`}
+                placeholder="https://leetcode.com/problems/two-sum/"
+                required
+              />
+              <button
+                type="button"
+                onClick={fetchProblemDetailsFromUrl}
+                disabled={urlFetching || !problem.url}
+                className={`px-6 py-3 rounded-md flex items-center justify-center ${colors.button.primary} ${(urlFetching || !problem.url) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {urlFetching ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <ExternalLink className="w-5 h-5 mr-2" />
+                    Fetch Details
+                  </>
+                )}
+              </button>
+            </div>
+            {urlFetching && <p className={`text-sm ${colors.primary.text} mt-2`}>Fetching problem details...</p>}
+            {urlError && <p className={`text-sm ${colors.text.error} mt-2`}>{urlError}</p>}
+          </div>
+        )}
+
+        {/* Problem Info Display (only after fetch or when editing) */}
+        {(problemFetched || id) && (
+          <div className={`p-6 rounded-lg shadow ${colors.background.card} border ${colors.border.primary}`}>
+            <h2 className={`text-lg font-semibold ${colors.text.primary} mb-4`}>
+              Problem Overview
+            </h2>
+            
+            {/* Problem Number and Title Row */}
+            <div className="flex items-baseline gap-2 mb-3">
+              <span className={`text-lg font-medium ${colors.text.secondary}`}>{problem.number}.</span>
+              <h3 className={`text-lg font-medium ${colors.text.primary}`}>{problem.title}</h3>
+              <span className={`ml-auto px-3 py-1 text-xs font-medium rounded-full ${
+                problem.difficulty === 'Easy' ? colors.difficulty.easy.bg + ' ' + colors.difficulty.easy.text :
+                problem.difficulty === 'Medium' ? colors.difficulty.medium.bg + ' ' + colors.difficulty.medium.text :
+                colors.difficulty.hard.bg + ' ' + colors.difficulty.hard.text
+              }`}>
+                {problem.difficulty}
+              </span>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={currentTag}
-                  onChange={e => setCurrentTag(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleTagAdd();}}}
-                  placeholder="Add a tag and press Enter"
-                  className="flex-grow px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:text-gray-100"
-                />
-                <button
-                  type="button"
-                  onClick={handleTagAdd}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-sm"
-                >
-                  Add
-                </button>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2 min-h-[20px]">
-                {problem.tags?.map(tag => (
+            {/* Tags Row */}
+            {problem.tags && problem.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {problem.tags.map(tag => (
                   <span
                     key={tag}
-                    className="bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-200 px-3 py-1 rounded-full text-sm flex items-center"
+                    className={`px-3 py-1 text-sm rounded-md ${colors.tag.default.bg} ${colors.tag.default.text}`}
                   >
                     {tag}
-                    <button
-                      type="button"
-                      onClick={() => handleTagRemove(tag)}
-                      className="ml-2 text-blue-500 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-100 focus:outline-none"
-                      aria-label={`Remove ${tag}`}
-                    >
-                      &times;
-                    </button>
                   </span>
                 ))}
+              </div>
+            )}
+
+            {/* URL link if exists */}
+            {problem.url && (
+              <div className="mt-3">
+                <a
+                  href={problem.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${colors.text.link} ${colors.text.linkHover} text-sm underline transition-colors`}
+                >
+                  View on LeetCode
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Only show the rest of the form if problem details are available */}
+        {(problemFetched || id) && (
+          <>
+            {/* Intuition and Implementation Section - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Intuition Section */}
+              <div className={`p-6 rounded-lg shadow ${colors.background.card} border ${colors.border.primary}`}>
+                <label htmlFor="intuition" className={`block text-lg font-semibold ${colors.text.primary} mb-4`}>
+                  <Lightbulb size={20} className="inline mr-2" />
+                  Intuition
+                </label>
+                <textarea
+                  id="intuition"
+                  name="intuition"
+                  value={problem.intuition || ''}
+                  onChange={handleInputChange}
+                  className={`w-full p-3 border rounded-md shadow-sm ${colors.input.base} ${colors.input.focus} resize-y`}
+                  style={{ height: '360px' }}
+                  placeholder="Explain your approach and thought process..."
+                />
+                <p className={`mt-2 text-xs ${colors.text.muted}`}>Describe your approach, key insights, and reasoning.</p>
+              </div>
+
+              {/* Implementation Section */}
+              <div className={`p-6 rounded-lg shadow ${colors.background.card} border ${colors.border.primary}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <label htmlFor="implementation" className={`block text-lg font-semibold ${colors.text.primary}`}>
+                    <Code size={20} className="inline mr-2" />
+                    Implementation
+                  </label>
+                  <select
+                    name="implementation_language"
+                    value={problem.implementation_language}
+                    onChange={handleInputChange}
+                    className={`px-3 py-2 border rounded-md shadow-sm text-sm ${colors.input.base} ${colors.input.focus}`}
+                  >
+                    {supportedLanguages.map(lang => (
+                      <option key={lang.value} value={lang.value}>
+                        {lang.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <textarea
+                  name="implementation"
+                  id="implementation"
+                  value={problem.implementation || ''}
+                  onChange={handleInputChange}
+                  className={`w-full p-3 font-mono text-sm border rounded-md shadow-sm ${colors.input.base} ${colors.input.focus} resize-y`}
+                  style={{ height: '360px' }}
+                  placeholder="Paste your code solution here..."
+                />
+                
+                {/* Code Preview */}
+                {problem.implementation && (
+                  <div className="mt-4">
+                    <h4 className={`text-sm font-medium ${colors.text.primary} mb-2`}>Preview:</h4>
+                    <div className={`rounded-lg overflow-hidden border ${colors.border.primary}`}>
+                      <SyntaxHighlighter
+                        language={problem.implementation_language || 'javascript'}
+                        style={highlighterTheme}
+                        showLineNumbers
+                        customStyle={{
+                          margin: 0,
+                          borderRadius: '0.5rem',
+                        }}
+                      >
+                        {problem.implementation}
+                      </SyntaxHighlighter>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Complexity Analysis Section - Full Width */}
+            <div className={`p-6 rounded-lg shadow ${colors.background.card} border ${colors.border.primary}`}>
+              <h3 className={`text-lg font-semibold ${colors.text.primary} mb-4`}>Complexity Analysis</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="time_complexity" className={`block text-sm font-medium ${colors.text.primary} mb-2`}>
+                    <Clock size={16} className="inline mr-2 text-red-500" />
+                    Time Complexity
+                  </label>
+                  <select
+                    name="time_complexity"
+                    id="time_complexity"
+                    value={problem.time_complexity}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm ${colors.input.base} ${colors.input.focus}`}
+                  >
+                    {complexityOptions.map(option => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="space_complexity" className={`block text-sm font-medium ${colors.text.primary} mb-2`}>
+                    <Zap size={16} className="inline mr-2 text-yellow-500" />
+                    Space Complexity
+                  </label>
+                  <select
+                    name="space_complexity"
+                    id="space_complexity"
+                    value={problem.space_complexity}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm ${colors.input.base} ${colors.input.focus}`}
+                  >
+                    {complexityOptions.map(option => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </>
         )}
-
-        {/* Intuition - unchanged */}
-        <div>
-          <label htmlFor="intuition" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            <Brain size={18} className="inline mr-2 text-purple-600" />Intuition
-          </label>
-          <textarea
-            name="intuition"
-            id="intuition"
-            value={problem.intuition || ''}
-            onChange={handleInputChange}
-            rows={6}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm dark:bg-gray-700 dark:text-gray-100"
-            placeholder="Explain your approach and reasoning..."
-          />
-        </div>
-
-        {/* Implementation with integrated language selector */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label htmlFor="implementation" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              <Code size={18} className="inline mr-2 text-green-600" />Implementation
-            </label>
-            <select
-              name="implementation_language"
-              id="implementation_language"
-              value={problem.implementation_language}
-              onChange={handleInputChange}
-              className="px-3 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-sm dark:text-gray-100"
-            >
-              {supportedLanguages.map(lang => (
-                <option key={lang.value} value={lang.value}>
-                  {lang.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <textarea
-            name="implementation"
-            id="implementation"
-            value={problem.implementation || ''}
-            onChange={handleInputChange}
-            rows={15}
-            className="block w-full px-3 py-2 font-mono text-sm border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-gray-100"
-            placeholder="Paste your code solution here..."
-          />
-        </div>
-
-        {/* Time and Space Complexity side by side */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="time_complexity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              <Clock size={18} className="inline mr-2 text-red-600" />Time Complexity
-            </label>
-            <select
-              name="time_complexity"
-              id="time_complexity"
-              value={problem.time_complexity}
-              onChange={handleInputChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm dark:text-gray-100"
-            >
-              {complexityOptions.map(option => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="space_complexity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              <Zap size={18} className="inline mr-2 text-yellow-600" />Space Complexity
-            </label>
-            <select
-              name="space_complexity"
-              id="space_complexity"
-              value={problem.space_complexity}
-              onChange={handleInputChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm dark:text-gray-100"
-            >
-              {complexityOptions.map(option => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Submit Button */}
-        <div className="mt-8">
-          <button
-            type="submit"
-            disabled={saving}
-            className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 flex items-center justify-center"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <Check className="mr-2 h-5 w-5" />
-            )}
-            {isEditing ? 'Update Problem' : 'Create Problem'}
-          </button>
-        </div>
       </form>
-
-      {/* Error message at the bottom, if any */}
-      {error && (
-        <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 rounded-md">
-          <span className="block sm:inline">{error}</span>
-        </div>
-      )}
     </div>
   );
 };
